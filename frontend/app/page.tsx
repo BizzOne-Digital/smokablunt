@@ -147,72 +147,74 @@ export default function Home() {
             <Link href="/shop?type=flowers" className="font-sans text-sm text-green hover:underline">View all flowers →</Link>
           </div>
         </section>
-
+    {/* ── Promo Slider ────────────────────────────────────── */}
+        <section className="max-w-site mx-auto px-4 md:px-8 pb-20">
+          <div className="relative overflow-hidden rounded-3xl bg-surface border border-border">
+            {/* Slides */}
+            <div className="relative w-full aspect-[16/6] md:aspect-[16/5]">
+              {["/slider1.png", "/slider2.png", "/slider3.png"].map((src, i) => (
+                <img
+                  key={i}
+                  src={src}
+                  alt=""
+                  className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-700 ${i === slide ? "opacity-100" : "opacity-0"}`}
+                />
+              ))}
+            </div>
+ 
+            {/* Navigation arrows */}
+            <button
+              onClick={() => { prevSlide(); if(slideTimer.current) { clearInterval(slideTimer.current); slideTimer.current = setInterval(nextSlide, 5000); } }}
+              className="absolute left-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-black/50 border border-white/10 backdrop-blur-sm flex items-center justify-center text-white hover:bg-black/70 transition-all z-20">
+              <span className="ms" style={{ fontSize: "20px" }}>chevron_left</span>
+            </button>
+            <button
+              onClick={() => { nextSlide(); if(slideTimer.current) { clearInterval(slideTimer.current); slideTimer.current = setInterval(nextSlide, 5000); } }}
+              className="absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-black/50 border border-white/10 backdrop-blur-sm flex items-center justify-center text-white hover:bg-black/70 transition-all z-20">
+              <span className="ms" style={{ fontSize: "20px" }}>chevron_right</span>
+            </button>
+ 
+            {/* Dots */}
+            <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-2 z-20">
+              {[0, 1, 2].map(i => (
+                <button
+                  key={i}
+                  onClick={() => { setSlide(i); if(slideTimer.current) { clearInterval(slideTimer.current); slideTimer.current = setInterval(nextSlide, 5000); } }}
+                  className={`h-2 rounded-full transition-all duration-300 ${i === slide ? "bg-green w-6" : "bg-white/40 w-2 hover:bg-white/70"}`}
+                />
+              ))}
+            </div>
+          </div>
+        </section>
         {/* ── Categories ────────────────────────────────────────── */}
         <section className="max-w-site mx-auto px-4 md:px-8 pb-20">
           <span className="font-sans text-xs font-semibold text-green uppercase tracking-widest block mb-1.5">Browse</span>
           <h2 className="font-title text-3xl md:text-4xl font-bold text-textPri mb-10">Shop By Category</h2>
           <div className="grid grid-cols-3 gap-3 md:gap-5">
             {[
-              { title:"Sale",          desc:"Hot deals & discounts",         href:"/shop?type=sale",          icon:"local_offer" },
-              { title:"Pre-Rolls",     desc:"Convenient & ready to use",     href:"/shop?type=pre-rolls",     icon:"smoking_rooms" },
-              { title:"Promo",         desc:"Special promotions",            href:"/shop?type=promo",         icon:"campaign" },
-              { title:"Concentrates",  desc:"Potent extracts",              href:"/shop?type=concentrates",  icon:"science" },
-              { title:"Edibles",       desc:"Potent & delicious",           href:"/shop?type=edibles",       icon:"cookie" },
-              { title:"Accessories",   desc:"Smoking & vaping",             href:"/shop?type=accessories",   icon:"build" },
-              { title:"Sativa",        desc:"Energizing & uplifting",       href:"/shop?type=flowers&strain=sativa", icon:"wb_sunny" },
-              { title:"Indica",        desc:"Relaxing & sedating",          href:"/shop?type=flowers&strain=indica", icon:"bedtime" },
-              { title:"Hybrid",        desc:"Balanced & versatile",         href:"/shop?type=flowers&strain=hybrid", icon:"tune" },
-            ].map(c => (
-              <Link key={c.title} href={c.href} className="group relative overflow-hidden rounded-2xl md:rounded-3xl aspect-square block bg-surface border border-border hover:border-green transition-all">
-                <div className="absolute inset-0 bg-gradient-to-t from-bg via-bg/60 to-transparent" />
-                <div className="absolute inset-0 flex flex-col items-center justify-center p-3 text-center">
-                  <span className="ms text-green mb-2 group-hover:scale-110 transition-transform" style={{ fontSize: "28px" }}>{c.icon}</span>
-                  <p className="font-title text-sm md:text-lg font-bold text-textPri leading-tight">{c.title}</p>
-                  <p className="font-sans text-[10px] md:text-xs text-textSec mt-1 hidden md:block">{c.desc}</p>
-                </div>
+              { href:"/shop?type=sale",                    img:"/product1.png" },
+              { href:"/shop?type=pre-rolls",               img:"/product2.png" },
+              { href:"/shop?type=promo",                   img:"/product3.png" },
+              { href:"/shop?type=concentrates",            img:"/product4.png" },
+              { href:"/shop?type=edibles",                 img:"/product5.png" },
+              { href:"/shop?type=accessories",             img:"/product6.png" },
+              { href:"/shop?type=flowers&strain=sativa",   img:"/product7.png" },
+              { href:"/shop?type=flowers&strain=indica",   img:"/product8.png" },
+              { href:"/shop?type=flowers&strain=hybrid",   img:"/product9.png" },
+            ].map((c, i) => (
+              <Link key={i} href={c.href} className="group relative overflow-hidden rounded-2xl md:rounded-3xl aspect-square block bg-surface border border-border hover:border-green hover:scale-[1.02] transition-all duration-300">
+                <img
+                  src={c.img}
+                  alt=""
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                />
               </Link>
             ))}
           </div>
         </section>
 
-        {/* ── Promo Slider ────────────────────────────────────── */}
-        <section className="max-w-site mx-auto px-4 md:px-8 pb-20">
-          <div className="bg-surface border border-border rounded-3xl overflow-hidden relative">
-            {/* Slide content */}
-            <div className="relative min-h-[320px] md:min-h-[280px] flex flex-col items-center justify-center text-center px-8 py-12">
-              <div className={`absolute inset-0 bg-gradient-to-b ${promos[slide].color} opacity-60`} />
-              <div className="relative z-10 max-w-lg mx-auto">
-                <div className="w-16 h-16 rounded-full bg-green/10 border border-green/20 flex items-center justify-center mx-auto mb-5">
-                  <span className="ms text-green" style={{ fontSize: "32px" }}>{promos[slide].icon}</span>
-                </div>
-                <h3 className="font-title text-2xl md:text-3xl font-bold text-textPri mb-3">{promos[slide].title}</h3>
-                <p className="font-sans text-sm text-textSec leading-relaxed mb-6">{promos[slide].desc}</p>
-                <Link href="/shop" className="inline-flex items-center gap-2 border border-green text-green px-6 py-3 rounded-full font-sans text-sm font-semibold hover:bg-green hover:text-bg transition-all">
-                  {promos[slide].cta}
-                </Link>
-              </div>
-            </div>
-
-            {/* Navigation arrows */}
-            <button onClick={() => { prevSlide(); if(slideTimer.current) { clearInterval(slideTimer.current); slideTimer.current = setInterval(nextSlide, 5000); } }}
-              className="absolute left-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-bg/80 border border-border flex items-center justify-center text-textSec hover:text-green hover:border-green transition-all z-20">
-              <span className="ms" style={{ fontSize: "20px" }}>chevron_left</span>
-            </button>
-            <button onClick={() => { nextSlide(); if(slideTimer.current) { clearInterval(slideTimer.current); slideTimer.current = setInterval(nextSlide, 5000); } }}
-              className="absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-bg/80 border border-border flex items-center justify-center text-textSec hover:text-green hover:border-green transition-all z-20">
-              <span className="ms" style={{ fontSize: "20px" }}>chevron_right</span>
-            </button>
-
-            {/* Dots */}
-            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 z-20">
-              {promos.map((_, i) => (
-                <button key={i} onClick={() => { setSlide(i); if(slideTimer.current) { clearInterval(slideTimer.current); slideTimer.current = setInterval(nextSlide, 5000); } }}
-                  className={`w-2 h-2 rounded-full transition-all ${i === slide ? "bg-green w-6" : "bg-textDim hover:bg-textSec"}`} />
-              ))}
-            </div>
-          </div>
-        </section>
+       
+    
 
         {/* ── Delivery CTA ──────────────────────────────────────── */}
         <section className="max-w-site mx-auto px-4 md:px-8 pb-20">
