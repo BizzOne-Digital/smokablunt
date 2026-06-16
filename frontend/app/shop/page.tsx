@@ -23,6 +23,7 @@ function ShopContent() {
   const [sort, setSort]           = useState("popular");
   const [search, setSearch]       = useState(searchQ);
   const [mobileFilters, setMobileFilters] = useState(false);
+  const [activeTab, setActiveTab] = useState("all");
 
   useEffect(() => { setSearch(searchQ); }, [searchQ]);
 
@@ -37,11 +38,24 @@ function ShopContent() {
   const toggle = (arr: string[], v: string, set: (x: string[]) => void) =>
     set(arr.includes(v) ? arr.filter(x => x !== v) : [...arr, v]);
 
-  const clearAll = () => { setStrains([]); setCats([]); setMaxPrice(150); setSort("popular"); setSearch(""); router.push("/shop"); };
+  const clearAll = () => { setStrains([]); setCats([]); setMaxPrice(150); setSort("popular"); setSearch(""); setActiveTab("all"); router.push("/shop"); };
 
   const filtered = useMemo(() => {
     let list = [...all];
     if (typeQ !== "all") list = list.filter(p => p.type === typeQ);
+    // Active tab filtering
+    if (activeTab !== "all") {
+      const tabLower = activeTab.toLowerCase();
+      if (["hybrid","indica","sativa"].includes(tabLower)) {
+        list = list.filter(p => p.category.toLowerCase() === tabLower);
+      } else if (["edibles","concentrates","accessories","pre-rolls"].includes(tabLower)) {
+        list = list.filter(p => p.type.toLowerCase() === tabLower);
+      } else if (tabLower === "sale") {
+        list = list.filter(p => p.type.toLowerCase() === "sale" || p.category.toLowerCase() === "sale");
+      } else if (tabLower === "promo") {
+        list = list.filter(p => p.type.toLowerCase() === "promo" || p.category.toLowerCase() === "promo");
+      }
+    }
     if (strains.length)  list = list.filter(p => strains.includes(p.category));
     if (cats.length)     list = list.filter(p => cats.includes(p.type));
     list = list.filter(p => p.price <= maxPrice);
@@ -54,7 +68,7 @@ function ShopContent() {
     else if (sort === "thc")   list.sort((a, b) => b.thc - a.thc);
     else list.sort((a, b) => b.rating - a.rating);
     return list;
-  }, [all, typeQ, strains, cats, maxPrice, sort, search]);
+  }, [all, typeQ, activeTab, strains, cats, maxPrice, sort, search]);
 
   const heroTitle = ({ flowers: "The Flower Boutique", edibles: "Artisan Edibles", concentrates: "Premium Concentrates" } as Record<string, string>)[typeQ] || "The Full Collection";
 
@@ -122,6 +136,33 @@ function ShopContent() {
         </div>
 
         <div className="max-w-site mx-auto px-4 md:px-8 py-8">
+          {/* Category Tabs */}
+          <div className="flex gap-2 overflow-x-auto pb-4 mb-2 scrollbar-hide -mx-4 px-4 md:mx-0 md:px-0">
+            {[
+              { label:"All",           filter:"all" },
+              { label:"Sale",          filter:"sale" },
+              { label:"Hybrid",        filter:"hybrid" },
+              { label:"Indica",        filter:"indica" },
+              { label:"Sativa",        filter:"sativa" },
+              { label:"Pre-Rolls",     filter:"pre-rolls" },
+              { label:"Edibles",       filter:"edibles" },
+              { label:"Concentrates",  filter:"concentrates" },
+              { label:"Accessories",   filter:"accessories" },
+              { label:"Promo",         filter:"promo" },
+            ].map(tab => {
+              const isActive = activeTab === tab.filter;
+              return (
+                <button
+                  key={tab.filter}
+                  onClick={() => setActiveTab(tab.filter)}
+                  className={`flex-shrink-0 px-5 py-2.5 rounded-full font-sans text-xs font-semibold uppercase tracking-wider transition-all whitespace-nowrap ${isActive ? "bg-green text-bg" : "bg-surface border border-border text-textSec hover:border-green hover:text-green"}`}
+                >
+                  {tab.label}
+                </button>
+              );
+            })}
+          </div>
+
           {/* Mobile top bar */}
           <div className="flex items-center justify-between mb-5 lg:hidden">
             <span className="font-sans text-sm text-textSec">

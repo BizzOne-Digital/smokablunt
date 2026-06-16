@@ -38,7 +38,7 @@ export default function Footer() {
         <div>
           <p className="font-sans text-xs font-semibold text-green uppercase tracking-widest mb-4">Hours</p>
           <ul className="space-y-2">
-            {[["Mon–Wed", "9AM – 10PM"], ["Thu–Fri", "9AM – Midnight"], ["Saturday", "10AM – Midnight"], ["Sunday", "11AM – 8PM"]].map(([d, h]) => (
+            {[["Monday", "10AM – 6PM"], ["Tue–Sat", "10AM – 8PM"], ["Sunday", "12PM – 8PM"]].map(([d, h]) => (
               <li key={d} className="flex justify-between font-sans text-xs">
                 <span className="text-textSec">{d}</span>
                 <span className="text-textPri">{h}</span>

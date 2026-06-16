@@ -10,6 +10,7 @@ export default function AdminLoginPage() {
   const [form, setForm] = useState({ email: "", password: "" });
   const [err,  setErr]  = useState("");
   const [busy, setBusy] = useState(false);
+  const [verified, setVerified] = useState(false);
 
   useEffect(() => {
     if (!loading && user) router.push(isAdmin ? "/admin" : "/");
@@ -17,6 +18,7 @@ export default function AdminLoginPage() {
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!verified) { setErr("Please verify you are not a robot."); return; }
     setBusy(true); setErr("");
     const res = await login(form.email, form.password);
     if (res.error) { setErr(res.error); setBusy(false); }
@@ -64,6 +66,22 @@ export default function AdminLoginPage() {
               />
             </div>
 
+            {/* Human Verification */}
+            <div className={`flex items-center gap-3 p-4 rounded-2xl border transition-all ${verified ? "border-green bg-greenBg" : "border-border bg-bg"}`}>
+              <input
+                type="checkbox"
+                checked={verified}
+                onChange={e => setVerified(e.target.checked)}
+                className="w-5 h-5 rounded"
+              />
+              <div className="flex items-center gap-2 flex-1">
+                <span className="font-sans text-sm text-textPri">I&apos;m not a robot</span>
+              </div>
+              <div className="flex items-center gap-1 opacity-50">
+                <span className="ms text-textDim" style={{ fontSize: "18px" }}>verified_user</span>
+              </div>
+            </div>
+
             {err && (
               <div className="p-3 bg-errorBg border border-error/20 rounded-2xl">
                 <p className="font-sans text-sm text-error flex items-center gap-2">
@@ -73,7 +91,7 @@ export default function AdminLoginPage() {
             )}
 
             <button
-              type="submit" disabled={busy}
+              type="submit" disabled={busy || !verified}
               className="w-full bg-green text-bg py-4 rounded-2xl font-sans text-sm font-bold uppercase tracking-widest hover:bg-greenLo transition-colors disabled:opacity-50 flex items-center justify-center gap-2 mt-2"
             >
               {busy && <span className="ms animate-spin" style={{ fontSize: "16px" }}>progress_activity</span>}

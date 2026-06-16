@@ -5,13 +5,13 @@ import Footer from "@/components/Footer";
 import { api } from "@/lib/api";
 
 const HOURS = [
-  { day:"Monday",    h:"9:00 AM – 10:00 PM", d:1 },
-  { day:"Tuesday",   h:"9:00 AM – 10:00 PM", d:2 },
-  { day:"Wednesday", h:"9:00 AM – 10:00 PM", d:3 },
-  { day:"Thursday",  h:"9:00 AM – 11:00 PM", d:4 },
-  { day:"Friday",    h:"9:00 AM – Midnight",  d:5 },
-  { day:"Saturday",  h:"10:00 AM – Midnight", d:6 },
-  { day:"Sunday",    h:"11:00 AM – 8:00 PM",  d:0 },
+  { day:"Monday",    h:"10:00 AM – 6:00 PM", d:1 },
+  { day:"Tuesday",   h:"10:00 AM – 8:00 PM", d:2 },
+  { day:"Wednesday", h:"10:00 AM – 8:00 PM", d:3 },
+  { day:"Thursday",  h:"10:00 AM – 8:00 PM", d:4 },
+  { day:"Friday",    h:"10:00 AM – 8:00 PM", d:5 },
+  { day:"Saturday",  h:"10:00 AM – 8:00 PM", d:6 },
+  { day:"Sunday",    h:"12:00 PM – 8:00 PM", d:0 },
 ];
 
 export default function ContactPage() {
@@ -26,10 +26,9 @@ export default function ContactPage() {
     const now = new Date();
     const h = now.getHours(), d = now.getDay();
     setToday(d);
-    if (d===0) setIsOpen(h>=11&&h<20);
-    else if (d===6) setIsOpen(h>=10);
-    else if (d>=4) setIsOpen(h>=9);
-    else setIsOpen(h>=9&&h<22);
+    if (d===0) setIsOpen(h>=12&&h<20);
+    else if (d===1) setIsOpen(h>=10&&h<18);
+    else setIsOpen(h>=10&&h<20);
   }, []);
 
   const f = (k: string, v: string) => setForm(p => ({ ...p, [k]: v }));
@@ -72,7 +71,7 @@ export default function ContactPage() {
                 {[
                   { icon:"call",        lbl:"Phone",    val:"249-288-4892",            href:"tel:2492884892" },
                   { icon:"mail",        lbl:"Email",    val:"smokablunt4you@gmail.com", href:"mailto:smokablunt4you@gmail.com" },
-                  { icon:"location_on", lbl:"Location", val:"12 E 6th St, Wyoming PA", href:"https://maps.google.com/?q=12+E+6th+St+Wyoming+PA" },
+                  { icon:"location_on", lbl:"Location", val:"Barrie, Ontario", href:"https://maps.google.com/?q=Barrie+Ontario" },
                 ].map(c => (
                   <li key={c.lbl} className="flex items-start gap-4">
                     <div className="w-10 h-10 rounded-2xl bg-greenBg border border-green/20 flex items-center justify-center flex-shrink-0">
@@ -85,7 +84,7 @@ export default function ContactPage() {
                   </li>
                 ))}
               </ul>
-              <a href="https://maps.google.com/?q=12+E+6th+St+Wyoming+PA" target="_blank" rel="noopener noreferrer"
+              <a href="https://maps.google.com/?q=Barrie+Ontario" target="_blank" rel="noopener noreferrer"
                 className="mt-8 w-full bg-green text-bg py-3.5 rounded-2xl font-sans text-sm font-bold uppercase tracking-widest hover:bg-greenLo transition-colors flex items-center justify-center gap-2">
                 <span className="ms" style={{ fontSize: "18px" }}>near_me</span>Get Directions
               </a>
@@ -117,17 +116,24 @@ export default function ContactPage() {
               <div>
                 <span className="font-sans text-xs font-semibold text-green uppercase tracking-widest block mb-2">Coverage</span>
                 <h2 className="font-title text-2xl font-bold text-textPri mb-4">Delivery Areas</h2>
-                <p className="font-sans text-sm text-textSec leading-relaxed mb-6">We offer discreet, premium delivery to Wyoming and surrounding communities within 60–90 minutes.</p>
+                <p className="font-sans text-sm text-textSec leading-relaxed mb-6">We offer discreet, premium delivery to Barrie and surrounding communities.</p>
                 <ul className="space-y-3 mb-6">
-                  {["Wyoming Proper", "Kingston & Wilkes-Barre", "Pittston Area", "Swoyersville & Exeter"].map(a => (
+                  {["Barrie", "Surrounding Cities"].map(a => (
                     <li key={a} className="flex items-center gap-3">
                       <span className="ms text-green" style={{ fontSize: "18px" }}>check_circle</span>
                       <span className="font-sans text-sm text-textPri">{a}</span>
                     </li>
                   ))}
                 </ul>
-                <div className="p-4 bg-greenBg border border-green/20 rounded-2xl">
-                  <p className="font-sans text-sm text-textSec">Free delivery on orders over <span className="text-green font-bold">100</span>. A 5 fee applies to smaller orders.</p>
+                <div className="space-y-3">
+                  <div className="p-4 bg-greenBg border border-green/20 rounded-2xl">
+                    <p className="font-sans text-xs font-semibold text-green uppercase tracking-wider mb-1">Barrie</p>
+                    <p className="font-sans text-sm text-textSec">Minimum order <span className="text-green font-bold">50</span> for free delivery. Under minimum: <span className="text-green font-bold">5–10</span> delivery fee.</p>
+                  </div>
+                  <div className="p-4 bg-greenBg border border-green/20 rounded-2xl">
+                    <p className="font-sans text-xs font-semibold text-green uppercase tracking-wider mb-1">Surrounding Cities</p>
+                    <p className="font-sans text-sm text-textSec">Minimum order <span className="text-green font-bold">70–100</span> for free delivery. Under minimum: <span className="text-green font-bold">10–20</span> delivery fee.</p>
+                  </div>
                 </div>
               </div>
               <div className="relative h-64 rounded-2xl overflow-hidden bg-bg border border-border flex items-center justify-center">
