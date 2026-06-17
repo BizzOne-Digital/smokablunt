@@ -56,7 +56,7 @@ export default function CheckoutPage() {
           <h1 className="font-title text-3xl font-bold text-textPri mb-2">Order Confirmed!</h1>
           <p className="font-sans text-green font-bold text-lg mb-4">#{orderNum}</p>
           <p className="font-sans text-sm text-textSec mb-2">Confirmation sent to <span className="text-textPri">{form.email}</span></p>
-          <p className="font-sans text-sm text-textSec mb-8">We&apos;ll call <span className="text-textPri">{form.phone}</span> when on our way. Est. delivery: <strong className="text-textPri">60–90 min</strong></p>
+          <p className="font-sans text-sm text-textSec mb-8">We&apos;ll call <span className="text-textPri">{form.phone}</span> when on our way. Deliver same day.</p>
           <Link href="/shop" className="inline-block bg-green text-bg px-8 py-4 rounded-2xl font-sans text-sm font-bold uppercase tracking-widest hover:bg-greenLo transition-colors">Continue Shopping</Link>
         </div>
       </main>
@@ -146,7 +146,7 @@ export default function CheckoutPage() {
                 {items.map(i => (
                   <div key={i.id} className="flex gap-4 pb-4 border-b border-border">
                     <img src={i.image} alt={i.name} className="w-14 h-14 rounded-2xl object-cover bg-bg flex-shrink-0" />
-                    <div className="flex-1"><p className="font-sans text-sm font-semibold text-textPri line-clamp-1">{i.name}</p><p className="font-sans text-xs text-textDim uppercase mt-0.5">{i.category} · qty: {i.quantity}</p></div>
+                    <div className="flex-1"><p className="font-sans text-sm font-semibold text-textPri line-clamp-1">{i.name}</p><p className="font-sans text-xs text-textDim uppercase mt-0.5">{i.category} · {(i as any).amount && `${(i as any).amount} · `}qty: {i.quantity}</p></div>
                     <p className="font-title text-sm font-bold text-textPri">{(i.price * i.quantity).toFixed(2)}</p>
                   </div>
                 ))}

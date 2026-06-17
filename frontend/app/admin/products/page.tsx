@@ -2,10 +2,43 @@
 import { useEffect, useState, useRef, useCallback } from "react";
 import { api } from "@/lib/api";
 
-interface Product { _id:string; name:string; category:string; type:string; price:number; stock:number; thc:number; description:string; images:{url:string;public_id:string}[]; isActive:boolean; isFeatured:boolean; rating:number; }
-const EMPTY = { name:"", category:"Indica", type:"flowers", price:0, stock:0, thc:0, description:"", images:[] as {url:string;public_id:string}[], isActive:true, isFeatured:false, rating:0 };
+interface AmountPrice { label:string; price:number; }
+interface Product {
+  _id:string; name:string; category:string; type:string; price:number; stock:number; thc:number;
+  description:string; images:{url:string;public_id:string}[]; isActive:boolean; isFeatured:boolean;
+  rating:number; amounts?:AmountPrice[]; onSale?:boolean;
+}
+
+const AMOUNTS_DEFAULT: AmountPrice[] = [
+  { label:"1/4", price:0 },
+  { label:"1/2", price:0 },
+  { label:"oz",  price:0 },
+  { label:"2oz", price:0 },
+  { label:"3oz", price:0 },
+];
+
+const EMPTY = {
+  name:"", category:"Indica", type:"flowers", price:0, stock:0, thc:0, description:"",
+  images:[] as {url:string;public_id:string}[], isActive:true, isFeatured:false, rating:0,
+  amounts:AMOUNTS_DEFAULT.map(a=>({...a})) as AmountPrice[], onSale:false,
+};
+
 const inp = "w-full bg-bg border border-border rounded-2xl px-4 py-3 font-sans text-sm text-textPri placeholder:text-textDim focus:outline-none focus:border-green transition-colors";
 const lbl = "block font-sans text-xs font-semibold text-textDim uppercase tracking-widest mb-1.5";
+
+// Which types get amount pricing
+const HAS_AMOUNTS = ["flowers","pre-rolls","concentrates","edibles"];
+
+// Category options per type
+const CATS: Record<string,string[]> = {
+  flowers:      ["Indica","Sativa","Hybrid"],
+  "pre-rolls":  ["Indica","Sativa","Hybrid","Mixed"],
+  concentrates: ["Shatter","Wax","Live Resin","Hash","Distillate","Other"],
+  edibles:      ["Gummies","Chocolate","Beverage","Capsule","Other"],
+  accessories:  ["Vaporizer","Pipe","Papers","Grinder","Other"],
+  sale:         ["Indica","Sativa","Hybrid","Edibles","Concentrate","Other"],
+  promo:        ["Indica","Sativa","Hybrid","Edibles","Concentrate","Other"],
+};
 
 export default function AdminProducts() {
   const [products,  setProducts]  = useState<Product[]>([]);
@@ -13,7 +46,7 @@ export default function AdminProducts() {
   const [search,    setSearch]    = useState("");
   const [showForm,  setShowForm]  = useState(false);
   const [editing,   setEditing]   = useState<Product|null>(null);
-  const [form,      setForm]      = useState(EMPTY);
+  const [form,      setForm]      = useState<typeof EMPTY>(EMPTY);
   const [saving,    setSaving]    = useState(false);
   const [uploading, setUploading] = useState(false);
   const [deleting,  setDeleting]  = useState<string|null>(null);
@@ -26,9 +59,23 @@ export default function AdminProducts() {
 
   useEffect(() => { load(); }, [load]);
 
-  const openCreate = () => { setForm(EMPTY); setEditing(null); setShowForm(true); };
-  const openEdit   = (p: Product) => { setForm({ name:p.name, category:p.category, type:p.type, price:p.price, stock:p.stock, thc:p.thc, description:p.description, images:p.images, isActive:p.isActive, isFeatured:p.isFeatured, rating:p.rating }); setEditing(p); setShowForm(true); };
-  const close      = () => { setShowForm(false); setEditing(null); setForm(EMPTY); };
+  const openCreate = () => { setForm({...EMPTY, amounts: AMOUNTS_DEFAULT.map(a=>({...a}))}); setEditing(null); setShowForm(true); };
+  const openEdit   = (p: Product) => {
+    setForm({
+      name:p.name, category:p.category, type:p.type, price:p.price, stock:p.stock, thc:p.thc,
+      description:p.description, images:p.images, isActive:p.isActive, isFeatured:p.isFeatured,
+      rating:p.rating, amounts: p.amounts?.length ? p.amounts : AMOUNTS_DEFAULT.map(a=>({...a})),
+      onSale: p.onSale||false,
+    });
+    setEditing(p); setShowForm(true);
+  };
+  const close = () => { setShowForm(false); setEditing(null); };
+
+  // When type changes, reset category to first valid option
+  const handleTypeChange = (t:string) => {
+    const cats = CATS[t] || ["Other"];
+    setForm(p => ({...p, type:t, category:cats[0]}));
+  };
 
   const uploadImg = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]; if (!file) return;
@@ -44,9 +91,10 @@ export default function AdminProducts() {
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault(); setSaving(true);
+    const payload = { ...form, amounts: HAS_AMOUNTS.includes(form.type) ? form.amounts : [] };
     const r = editing
-      ? await api.put(`/products/${editing._id}`, form)
-      : await api.post("/products", form);
+      ? await api.put(`/products/${editing._id}`, payload)
+      : await api.post("/products", payload);
     if (r.ok) { load(); close(); }
     else { const d = await r.json(); alert("Error: " + d.error); }
     setSaving(false);
@@ -64,7 +112,11 @@ export default function AdminProducts() {
     load();
   };
 
-  const filtered = products.filter(p => !search || p.name.toLowerCase().includes(search.toLowerCase()) || p.type.toLowerCase().includes(search.toLowerCase()));
+  const filtered = products.filter(p =>
+    !search || p.name.toLowerCase().includes(search.toLowerCase()) || p.type.toLowerCase().includes(search.toLowerCase())
+  );
+
+  const showAmounts = HAS_AMOUNTS.includes(form.type);
 
   return (
     <div className="space-y-5 max-w-6xl">
@@ -100,6 +152,7 @@ export default function AdminProducts() {
                 )}
                 <div className="absolute top-2 left-2 flex gap-1.5 flex-wrap">
                   <span className="bg-bg/80 backdrop-blur-sm text-green px-2 py-0.5 rounded-full font-sans text-[9px] font-bold uppercase">{p.type}</span>
+                  {p.onSale && <span className="bg-red-500/80 text-white px-2 py-0.5 rounded-full font-sans text-[9px] font-bold">SALE</span>}
                   {p.isFeatured && <span className="bg-yellow-500/80 text-yellow-900 px-2 py-0.5 rounded-full font-sans text-[9px] font-bold">★</span>}
                   {!p.isActive && <span className="bg-error/80 text-white px-2 py-0.5 rounded-full font-sans text-[9px] font-bold">Hidden</span>}
                 </div>
@@ -118,6 +171,13 @@ export default function AdminProducts() {
                   <span className="font-title text-sm font-bold text-green flex-shrink-0 ml-2">{p.price}</span>
                 </div>
                 <p className="font-sans text-xs text-textSec mb-3">{p.category} · THC: {p.thc}% · Stock: {p.stock}</p>
+                {p.amounts?.some(a=>a.price>0) && (
+                  <div className="flex gap-1 flex-wrap mb-3">
+                    {p.amounts.filter(a=>a.price>0).map(a=>(
+                      <span key={a.label} className="bg-bg border border-border rounded-lg px-2 py-0.5 font-sans text-[10px] text-textSec">{a.label}: {a.price}</span>
+                    ))}
+                  </div>
+                )}
                 <div className="flex gap-2">
                   <button onClick={() => toggleActive(p)} className={`flex-1 py-1.5 rounded-xl font-sans text-[11px] font-semibold uppercase tracking-wide transition-colors border ${p.isActive ? "border-border text-textSec hover:border-error hover:text-error" : "border-green/30 text-green hover:bg-green/10"}`}>
                     {p.isActive ? "Hide" : "Show"}
@@ -177,30 +237,64 @@ export default function AdminProducts() {
 
                 <div className="grid grid-cols-2 gap-4">
                   <div><label className={lbl}>Type *</label>
-                    <select value={form.type} onChange={e => setForm(p => ({...p, type:e.target.value}))} className={inp}>
-                      {["flowers","edibles","concentrates","accessories"].map(t => <option key={t} value={t} className="bg-bg capitalize">{t}</option>)}
+                    <select value={form.type} onChange={e => handleTypeChange(e.target.value)} className={inp}>
+                      {["flowers","pre-rolls","concentrates","edibles","accessories","sale","promo"].map(t => (
+                        <option key={t} value={t} className="bg-bg capitalize">{t}</option>
+                      ))}
                     </select>
                   </div>
                   <div><label className={lbl}>Category *</label>
                     <select value={form.category} onChange={e => setForm(p => ({...p, category:e.target.value}))} className={inp}>
-                      {["Indica","Sativa","Hybrid"].map(c => <option key={c} value={c} className="bg-bg">{c}</option>)}
+                      {(CATS[form.type]||["Other"]).map(c => <option key={c} value={c} className="bg-bg">{c}</option>)}
                     </select>
                   </div>
                 </div>
 
                 <div className="grid grid-cols-3 gap-4">
-                  {[{k:"price",l:"Price *"},{k:"stock",l:"Stock"},{k:"thc",l:"THC %"}].map(f => (
-                    <div key={f.k}><label className={lbl}>{f.l}</label>
-                      <input type="number" min={0} step={f.k==="thc"?"0.1":"1"} value={form[f.k as keyof typeof form] as number} onChange={e => setForm(p => ({...p,[f.k]:parseFloat(e.target.value)||0}))} className={inp} />
-                    </div>
-                  ))}
+                  <div><label className={lbl}>Base Price *</label>
+                    <input type="number" min={0} step="1" value={form.price} onChange={e => setForm(p => ({...p,price:parseFloat(e.target.value)||0}))} className={inp} />
+                  </div>
+                  <div><label className={lbl}>Stock</label>
+                    <input type="number" min={0} value={form.stock} onChange={e => setForm(p => ({...p,stock:parseFloat(e.target.value)||0}))} className={inp} />
+                  </div>
+                  <div><label className={lbl}>THC %</label>
+                    <input type="number" min={0} step="0.1" value={form.thc} onChange={e => setForm(p => ({...p,thc:parseFloat(e.target.value)||0}))} className={inp} />
+                  </div>
                 </div>
+
+                {/* Amount Pricing — only for relevant types */}
+                {showAmounts && (
+                  <div>
+                    <label className={lbl}>Amount Pricing (set price per amount)</label>
+                    <div className="space-y-2">
+                      {form.amounts.map((a, i) => (
+                        <div key={a.label} className="flex items-center gap-3 bg-bg border border-border rounded-2xl px-4 py-2.5">
+                          <span className="font-sans text-sm font-semibold text-green w-10">{a.label}</span>
+                          <input
+                            type="number" min={0} step="1" value={a.price}
+                            onChange={e => setForm(p => ({
+                              ...p,
+                              amounts: p.amounts.map((x,j) => j===i ? {...x, price:parseFloat(e.target.value)||0} : x)
+                            }))}
+                            className="flex-1 bg-transparent outline-none text-sm text-textPri placeholder:text-textDim"
+                            placeholder="0 = use base price"
+                          />
+                        </div>
+                      ))}
+                    </div>
+                    <p className="font-sans text-xs text-textDim mt-1.5">Leave 0 to use base price for that amount.</p>
+                  </div>
+                )}
 
                 <div><label className={lbl}>Description *</label><textarea required rows={3} value={form.description} onChange={e => setForm(p => ({...p, description:e.target.value}))} className={`${inp} resize-none`} placeholder="Describe the strain, effects, and flavour..." /></div>
 
                 {/* Toggles */}
                 <div className="flex flex-wrap gap-6">
-                  {[{k:"isActive",l:"Active (visible in shop)"},{k:"isFeatured",l:"Featured on homepage"}].map(t => (
+                  {[
+                    {k:"isActive",   l:"Active (visible in shop)"},
+                    {k:"isFeatured", l:"Featured on homepage"},
+                    {k:"onSale",     l:"On Sale"},
+                  ].map(t => (
                     <label key={t.k} className="flex items-center gap-3 cursor-pointer">
                       <button type="button" onClick={() => setForm(p => ({...p,[t.k]:!p[t.k as keyof typeof p]}))}
                         className={`w-11 h-6 rounded-full transition-colors relative flex-shrink-0 ${form[t.k as keyof typeof form] ? "bg-green" : "bg-surfaceHi border border-border"}`}>

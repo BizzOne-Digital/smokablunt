@@ -16,30 +16,6 @@ export default function Home() {
   const [slide, setSlide] = useState(0);
   const slideTimer = useRef<ReturnType<typeof setInterval>|null>(null);
 
-  const promos = [
-    {
-      title: "Refer a Friend. Get 20 Off.",
-      desc: "They order. You save. Get 20 off your next order when you refer a friend.",
-      cta: "Explore",
-      icon: "group_add",
-      color: "from-emerald-900/40 to-bg",
-    },
-    {
-      title: "Mix & Match Flower Deals",
-      desc: "Choose multiple strains and customize your order. More choice. More control.",
-      cta: "Explore",
-      icon: "extension",
-      color: "from-purple-900/40 to-bg",
-    },
-    {
-      title: "Happy Hour Just Got Better",
-      desc: "Daily from 3 PM \u2013 5 PM, take 10 off all products. Set your reminder. Order during the window. Save instantly. Limited time. Every day.",
-      cta: "Explore",
-      icon: "schedule",
-      color: "from-yellow-900/40 to-bg",
-    },
-  ];
-
   const nextSlide = useCallback(() => setSlide(s => (s + 1) % 3), []);
   const prevSlide = useCallback(() => setSlide(s => (s - 1 + 3) % 3), []);
 
@@ -90,7 +66,7 @@ export default function Home() {
                 <span className="block text-green">Delivered.</span>
               </h1>
               <p className="font-sans text-lg text-textSec leading-relaxed mb-10 max-w-lg">
-                Artisan flowers, edibles, and concentrates. Hand-picked for potency, flavour, and effect — at your door in 60–90 minutes.
+                Artisan flowers, edibles, and concentrates. Hand-picked for potency, flavour, and effect — delivered fast and discreet.
               </p>
               <div className="flex flex-wrap gap-3">
                 <Link href="/shop" className="bg-green text-bg px-8 py-4 rounded-2xl font-sans text-sm font-bold uppercase tracking-widest hover:bg-greenLo transition-colors shadow-xl shadow-green/20">
@@ -147,45 +123,7 @@ export default function Home() {
             <Link href="/shop?type=flowers" className="font-sans text-sm text-green hover:underline">View all flowers →</Link>
           </div>
         </section>
-    {/* ── Promo Slider ────────────────────────────────────── */}
-        <section className="max-w-site mx-auto px-4 md:px-8 pb-20">
-          <div className="relative overflow-hidden rounded-3xl bg-surface border border-border">
-            {/* Slides */}
-            <div className="relative w-full aspect-[16/6] md:aspect-[16/5]">
-              {["/slider1.png", "/slider2.png", "/slider3.png"].map((src, i) => (
-                <img
-                  key={i}
-                  src={src}
-                  alt=""
-                  className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-700 ${i === slide ? "opacity-100" : "opacity-0"}`}
-                />
-              ))}
-            </div>
- 
-            {/* Navigation arrows */}
-            <button
-              onClick={() => { prevSlide(); if(slideTimer.current) { clearInterval(slideTimer.current); slideTimer.current = setInterval(nextSlide, 5000); } }}
-              className="absolute left-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-black/50 border border-white/10 backdrop-blur-sm flex items-center justify-center text-white hover:bg-black/70 transition-all z-20">
-              <span className="ms" style={{ fontSize: "20px" }}>chevron_left</span>
-            </button>
-            <button
-              onClick={() => { nextSlide(); if(slideTimer.current) { clearInterval(slideTimer.current); slideTimer.current = setInterval(nextSlide, 5000); } }}
-              className="absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-black/50 border border-white/10 backdrop-blur-sm flex items-center justify-center text-white hover:bg-black/70 transition-all z-20">
-              <span className="ms" style={{ fontSize: "20px" }}>chevron_right</span>
-            </button>
- 
-            {/* Dots */}
-            <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-2 z-20">
-              {[0, 1, 2].map(i => (
-                <button
-                  key={i}
-                  onClick={() => { setSlide(i); if(slideTimer.current) { clearInterval(slideTimer.current); slideTimer.current = setInterval(nextSlide, 5000); } }}
-                  className={`h-2 rounded-full transition-all duration-300 ${i === slide ? "bg-green w-6" : "bg-white/40 w-2 hover:bg-white/70"}`}
-                />
-              ))}
-            </div>
-          </div>
-        </section>
+
         {/* ── Categories ────────────────────────────────────────── */}
         <section className="max-w-site mx-auto px-4 md:px-8 pb-20">
           <span className="font-sans text-xs font-semibold text-green uppercase tracking-widest block mb-1.5">Browse</span>
@@ -213,8 +151,47 @@ export default function Home() {
           </div>
         </section>
 
-       
-    
+
+
+        {/* ── Promo Slider ────────────────────────────────────── */}
+        <section className="max-w-site mx-auto px-4 md:px-8 pb-20">
+          <div className="relative overflow-hidden rounded-3xl bg-surface border border-border">
+            {/* Slides */}
+            <div className="relative w-full aspect-[16/6] md:aspect-[16/5]">
+              {["/slider1.png", "/slider2.png", "/slider3.png"].map((src, i) => (
+                <img
+                  key={i}
+                  src={src}
+                  alt=""
+                  className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-700 ${i === slide ? "opacity-100" : "opacity-0"}`}
+                />
+              ))}
+            </div>
+
+            {/* Navigation arrows */}
+            <button
+              onClick={() => { prevSlide(); if(slideTimer.current) { clearInterval(slideTimer.current); slideTimer.current = setInterval(nextSlide, 5000); } }}
+              className="absolute left-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-black/50 border border-white/10 backdrop-blur-sm flex items-center justify-center text-white hover:bg-black/70 transition-all z-20">
+              <span className="ms" style={{ fontSize: "20px" }}>chevron_left</span>
+            </button>
+            <button
+              onClick={() => { nextSlide(); if(slideTimer.current) { clearInterval(slideTimer.current); slideTimer.current = setInterval(nextSlide, 5000); } }}
+              className="absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-black/50 border border-white/10 backdrop-blur-sm flex items-center justify-center text-white hover:bg-black/70 transition-all z-20">
+              <span className="ms" style={{ fontSize: "20px" }}>chevron_right</span>
+            </button>
+
+            {/* Dots */}
+            <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-2 z-20">
+              {[0, 1, 2].map(i => (
+                <button
+                  key={i}
+                  onClick={() => { setSlide(i); if(slideTimer.current) { clearInterval(slideTimer.current); slideTimer.current = setInterval(nextSlide, 5000); } }}
+                  className={`h-2 rounded-full transition-all duration-300 ${i === slide ? "bg-green w-6" : "bg-white/40 w-2 hover:bg-white/70"}`}
+                />
+              ))}
+            </div>
+          </div>
+        </section>
 
         {/* ── Delivery CTA ──────────────────────────────────────── */}
         <section className="max-w-site mx-auto px-4 md:px-8 pb-20">

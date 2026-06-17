@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { CartProvider } from "@/lib/CartContext";
 import { AuthProvider } from "@/lib/AuthContext";
+import AgeGate from "@/components/AgeGate";
 
 export const metadata: Metadata = {
   title: "Smokablunt | Premium Online Dispensary",
@@ -15,7 +16,14 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet"/>
         <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap" rel="stylesheet"/>
       </head>
-      <body><AuthProvider><CartProvider>{children}</CartProvider></AuthProvider></body>
+      <body>
+        <AuthProvider>
+          <CartProvider>
+            <AgeGate />
+            {children}
+          </CartProvider>
+        </AuthProvider>
+      </body>
     </html>
   );
 }

@@ -2,23 +2,57 @@
 import { useState } from "react";
 import { useCart } from "@/lib/CartContext";
 
-interface P { id: string; name: string; category: string; type: string; price: number; rating: number; description: string; image: string; thc: number; }
+interface AmountPrice { label:string; price:number; }
+interface P { id:string; name:string; category:string; type:string; price:number; rating:number; description:string; image:string; thc:number; amounts?:AmountPrice[]; }
+
+// Default amounts for flowers; can be overridden by product.amounts
+const flowerAmounts: AmountPrice[] = [
+  { label:"1/4", price:0 },
+  { label:"1/2", price:0 },
+  { label:"oz",  price:0 },
+  { label:"2oz", price:0 },
+  { label:"3oz", price:0 },
+];
 
 export default function ProductCard({ p }: { p: P }) {
   const { addItem } = useCart();
-  const [added, setAdded] = useState(false);
+  const [added, setAdded]     = useState(false);
+  const [qty, setQty]         = useState(1);
+  const [showPicker, setShowPicker] = useState(false);
 
-  const handleAdd = () => {
-    addItem({ id: p.id, name: p.name, price: p.price, category: p.category, image: p.image });
-    setAdded(true);
-    setTimeout(() => setAdded(false), 1600);
-  };
+  const isFlower = ["flowers","indica","sativa","hybrid"].includes(p.type?.toLowerCase()) ||
+                   ["Indica","Sativa","Hybrid"].includes(p.category);
+
+  // Use product-level amounts if defined, else default flower amounts (price shown from product base price)
+  const amounts: AmountPrice[] = p.amounts?.length ? p.amounts :
+    isFlower ? flowerAmounts.map(a => ({ ...a, price: p.price })) : [];
+
+  const [selectedAmount, setSelectedAmount] = useState<AmountPrice|null>(
+    amounts.length > 0 ? amounts[0] : null
+  );
+
+  const activePrice = selectedAmount ? selectedAmount.price || p.price : p.price;
 
   const catStyle = {
     Indica: "bg-purple-500/10 text-purple-400",
     Sativa: "bg-yellow-500/10 text-yellow-400",
     Hybrid: "bg-green/10 text-green",
   }[p.category] || "bg-green/10 text-green";
+
+  const handleAdd = () => {
+    if (amounts.length > 0 && !showPicker) { setShowPicker(true); return; }
+    addItem({
+      id: p.id,
+      name: p.name,
+      price: activePrice,
+      category: p.category,
+      image: p.image,
+      amount: selectedAmount?.label || "1",
+    });
+    setAdded(true);
+    setShowPicker(false);
+    setTimeout(() => setAdded(false), 1600);
+  };
 
   return (
     <article className="group bg-card border border-border rounded-3xl overflow-hidden hover:border-borderHi hover:shadow-xl hover:shadow-black/30 transition-all duration-300 flex flex-col">
@@ -31,7 +65,6 @@ export default function ProductCard({ p }: { p: P }) {
           loading="lazy"
           onError={e => { (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1603909223429-69bb7101f420?w=600&q=80"; }}
         />
-        {/* Overlays */}
         <div className="absolute inset-0 bg-gradient-to-t from-card/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
         <div className="absolute top-3 left-3">
           <span className={`px-2.5 py-1 rounded-full font-sans text-[10px] font-bold uppercase tracking-wider backdrop-blur-sm ${catStyle}`}>
@@ -60,22 +93,61 @@ export default function ProductCard({ p }: { p: P }) {
 
         <p className="font-sans text-sm text-textSec line-clamp-2 flex-1 leading-relaxed">{p.description}</p>
 
+        {/* Amount selector — shown when picker is open */}
+        {showPicker && amounts.length > 0 && (
+          <div className="space-y-2">
+            <p className="font-sans text-xs font-semibold text-textDim uppercase tracking-widest">Select Amount</p>
+            <div className="grid grid-cols-3 gap-1.5">
+              {amounts.map(a => (
+                <button
+                  key={a.label}
+                  onClick={() => setSelectedAmount(a)}
+                  className={`py-2 rounded-xl font-sans text-xs font-semibold border transition-all ${selectedAmount?.label === a.label ? "bg-green text-bg border-green" : "border-border text-textSec hover:border-green hover:text-green"}`}
+                >
+                  {a.label}
+                  {a.price > 0 && <span className="block text-[9px] opacity-70">{a.price}</span>}
+                </button>
+              ))}
+            </div>
+            {/* Quantity */}
+            <div className="flex items-center justify-between bg-bg border border-border rounded-xl px-3 py-2">
+              <span className="font-sans text-xs text-textSec">Qty</span>
+              <div className="flex items-center gap-3">
+                <button onClick={() => setQty(q => Math.max(1, q-1))} className="w-6 h-6 flex items-center justify-center text-textSec hover:text-green transition-colors">
+                  <span className="ms" style={{ fontSize:"14px" }}>remove</span>
+                </button>
+                <span className="font-sans text-sm font-bold text-textPri w-5 text-center">{qty}</span>
+                <button onClick={() => setQty(q => q+1)} className="w-6 h-6 flex items-center justify-center text-textSec hover:text-green transition-colors">
+                  <span className="ms" style={{ fontSize:"14px" }}>add</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Price + Add */}
         <div className="flex items-center justify-between pt-1 border-t border-border">
           <div>
             <p className="font-sans text-[10px] text-textDim uppercase tracking-wider">From</p>
-            <p className="font-title text-xl font-bold text-textPri">{p.price}</p>
+            <p className="font-title text-xl font-bold text-textPri">{activePrice}</p>
           </div>
-          <button
-            onClick={handleAdd}
-            className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl font-sans text-xs font-bold uppercase tracking-wider transition-all duration-200 ${added
-              ? "bg-greenBg border border-green text-green"
-              : "bg-green text-bg hover:bg-greenLo active:scale-95 shadow-lg shadow-green/20"
-            }`}
-          >
-            <span className="ms" style={{ fontSize: "16px" }}>{added ? "check" : "add_shopping_cart"}</span>
-            {added ? "Added!" : "Add"}
-          </button>
+          <div className="flex gap-2">
+            {showPicker && (
+              <button onClick={() => setShowPicker(false)} className="flex items-center gap-1 px-3 py-2.5 rounded-2xl font-sans text-xs font-semibold border border-border text-textSec hover:border-borderHi transition-all">
+                <span className="ms" style={{ fontSize:"14px" }}>close</span>
+              </button>
+            )}
+            <button
+              onClick={handleAdd}
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl font-sans text-xs font-bold uppercase tracking-wider transition-all duration-200 ${added
+                ? "bg-greenBg border border-green text-green"
+                : "bg-green text-bg hover:bg-greenLo active:scale-95 shadow-lg shadow-green/20"
+              }`}
+            >
+              <span className="ms" style={{ fontSize: "16px" }}>{added ? "check" : amounts.length > 0 && !showPicker ? "tune" : "add_shopping_cart"}</span>
+              {added ? "Added!" : amounts.length > 0 && !showPicker ? "Select" : "Add"}
+            </button>
+          </div>
         </div>
       </div>
     </article>

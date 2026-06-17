@@ -33,25 +33,25 @@ export default function CartDrawer({ open, onClose }: { open: boolean; onClose: 
               <button onClick={onClose} className="text-green font-sans text-sm hover:underline">Browse Products →</button>
             </div>
           ) : items.map(item => (
-            <div key={item.id} className="flex gap-3 bg-card border border-border rounded-2xl p-3 group">
+            <div key={`${item.id}-${item.amount}`} className="flex gap-3 bg-card border border-border rounded-2xl p-3 group">
               <div className="w-14 h-14 rounded-xl overflow-hidden flex-shrink-0 bg-bg">
                 <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
               </div>
               <div className="flex-1 min-w-0">
                 <p className="font-sans text-sm font-semibold text-textPri line-clamp-1">{item.name}</p>
-                <p className="font-sans text-xs text-textDim uppercase tracking-wider mt-0.5">{item.category}</p>
+                <p className="font-sans text-xs text-textDim uppercase tracking-wider mt-0.5">{item.category} · {item.amount}</p>
                 <p className="font-title text-sm font-bold text-green mt-1">{item.price}</p>
               </div>
               <div className="flex flex-col items-end justify-between">
-                <button onClick={() => removeItem(item.id)} className="text-textDim hover:text-error transition-colors opacity-0 group-hover:opacity-100">
+                <button onClick={() => removeItem(item.id, item.amount)} className="text-textDim hover:text-error transition-colors opacity-0 group-hover:opacity-100">
                   <span className="ms" style={{ fontSize: "16px" }}>delete</span>
                 </button>
                 <div className="flex items-center gap-1.5 bg-bg border border-border rounded-full px-1 py-0.5">
-                  <button onClick={() => updateQty(item.id, item.quantity - 1)} className="w-5 h-5 flex items-center justify-center text-textSec hover:text-green transition-colors">
+                  <button onClick={() => updateQty(item.id, item.amount, item.quantity - 1)} className="w-5 h-5 flex items-center justify-center text-textSec hover:text-green transition-colors">
                     <span className="ms" style={{ fontSize: "12px" }}>remove</span>
                   </button>
                   <span className="font-sans text-xs font-semibold text-textPri w-4 text-center">{item.quantity}</span>
-                  <button onClick={() => updateQty(item.id, item.quantity + 1)} className="w-5 h-5 flex items-center justify-center text-textSec hover:text-green transition-colors">
+                  <button onClick={() => updateQty(item.id, item.amount, item.quantity + 1)} className="w-5 h-5 flex items-center justify-center text-textSec hover:text-green transition-colors">
                     <span className="ms" style={{ fontSize: "12px" }}>add</span>
                   </button>
                 </div>
