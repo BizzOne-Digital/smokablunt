@@ -5,25 +5,25 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import ProductCard from "@/components/ProductCard";
 import { api } from "@/lib/api";
-
+ 
 interface Product { _id:string; name:string; category:string; type:string; price:number; rating:number; description:string; images:{url:string}[]; thc:number; }
-
+ 
 const norm = (p: Product) => ({ id:p._id, name:p.name, category:p.category, type:p.type, price:p.price, rating:p.rating||0, description:p.description, image:p.images?.[0]?.url||"", thc:p.thc||0 });
-
+ 
 export default function Home() {
   const [featured, setFeatured] = useState<ReturnType<typeof norm>[]>([]);
   const [loading, setLoading] = useState(true);
   const [slide, setSlide] = useState(0);
   const slideTimer = useRef<ReturnType<typeof setInterval>|null>(null);
-
+ 
   const nextSlide = useCallback(() => setSlide(s => (s + 1) % 3), []);
   const prevSlide = useCallback(() => setSlide(s => (s - 1 + 3) % 3), []);
-
+ 
   useEffect(() => {
     slideTimer.current = setInterval(nextSlide, 5000);
     return () => { if (slideTimer.current) clearInterval(slideTimer.current); };
   }, [nextSlide]);
-
+ 
   useEffect(() => {
     api.get("/products?featured=true&type=flowers")
       .then(r => r.json())
@@ -31,12 +31,12 @@ export default function Home() {
       .catch(() => {})
       .finally(() => setLoading(false));
   }, []);
-
+ 
   return (
     <>
       <Navbar />
       <main className="pt-14">
-
+ 
         {/* ── Hero ──────────────────────────────────────────────── */}
         <section className="relative min-h-[92vh] flex items-center overflow-hidden">
           <div className="absolute inset-0">
@@ -79,11 +79,11 @@ export default function Home() {
             </div>
           </div>
         </section>
-
+ 
         {/* ── Stats ─────────────────────────────────────────────── */}
         <section className="bg-surface border-y border-border">
-          <div className="max-w-site mx-auto px-4 md:px-8 py-8 grid grid-cols-2 md:grid-cols-4 gap-6">
-            {[["100+","Strains"],["60–90","Min Delivery"],["19+","Age Verified"],["5★","Rated"]].map(([v,l])=>(
+          <div className="max-w-site mx-auto px-4 md:px-8 py-8 grid grid-cols-3 gap-6">
+            {[["100+","Strains"],["19+","Age Verified"],["5★","Rated"]].map(([v,l])=>(
               <div key={l} className="text-center">
                 <p className="font-title text-3xl font-bold text-green">{v}</p>
                 <p className="font-sans text-xs text-textSec uppercase tracking-wider mt-1">{l}</p>
@@ -91,7 +91,7 @@ export default function Home() {
             ))}
           </div>
         </section>
-
+ 
         {/* ── Featured Products ──────────────────────────────────── */}
         <section className="max-w-site mx-auto px-4 md:px-8 py-20">
           <div className="flex justify-between items-end mb-10">
@@ -103,7 +103,7 @@ export default function Home() {
               View All <span className="ms" style={{fontSize:"16px"}}>arrow_forward</span>
             </Link>
           </div>
-
+ 
           {loading ? (
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
               {[1,2,3].map(i => <div key={i} className="h-96 bg-card border border-border rounded-3xl animate-pulse"/>)}
@@ -118,7 +118,7 @@ export default function Home() {
               <p className="font-sans text-textSec">No products yet. <Link href="/admin" className="text-green hover:underline">Add from admin →</Link></p>
             </div>
           )}
-
+ 
           <div className="mt-8 text-center sm:hidden">
             <Link href="/shop?type=flowers" className="font-sans text-sm text-green hover:underline">View all flowers →</Link>
           </div>

@@ -5,27 +5,31 @@ import { useCart } from "@/lib/CartContext";
 interface AmountPrice { label:string; price:number; }
 interface P { id:string; name:string; category:string; type:string; price:number; rating:number; description:string; image:string; thc:number; amounts?:AmountPrice[]; }
 
-// Default amounts for flowers; can be overridden by product.amounts
-const flowerAmounts: AmountPrice[] = [
-  { label:"1/4", price:0 },
-  { label:"1/2", price:0 },
-  { label:"oz",  price:0 },
-  { label:"2oz", price:0 },
-  { label:"3oz", price:0 },
-];
-
 export default function ProductCard({ p }: { p: P }) {
   const { addItem } = useCart();
   const [added, setAdded]     = useState(false);
   const [qty, setQty]         = useState(1);
   const [showPicker, setShowPicker] = useState(false);
 
-  const isFlower = ["flowers","indica","sativa","hybrid"].includes(p.type?.toLowerCase()) ||
-                   ["Indica","Sativa","Hybrid"].includes(p.category);
+  const isFlower   = ["flowers","pre-rolls"].includes(p.type?.toLowerCase());
+  const isQtyType  = ["edibles","concentrates"].includes(p.type?.toLowerCase());
 
-  // Use product-level amounts if defined, else default flower amounts (price shown from product base price)
-  const amounts: AmountPrice[] = p.amounts?.length ? p.amounts :
-    isFlower ? flowerAmounts.map(a => ({ ...a, price: p.price })) : [];
+  const flowerAmts: AmountPrice[] = [
+    { label:"1/4", price:p.price },
+    { label:"1/2", price:p.price },
+    { label:"oz",  price:p.price },
+    { label:"2oz", price:p.price },
+    { label:"3oz", price:p.price },
+  ];
+
+  const qtyAmts: AmountPrice[] = [1,2,3,4,5].map(n => ({ label: String(n), price: p.price * n }));
+
+  // Use product-level amounts if set, else defaults per type
+  const amounts: AmountPrice[] =
+    p.amounts?.some(a => a.price > 0) ? p.amounts :
+    isFlower  ? flowerAmts :
+    isQtyType ? qtyAmts :
+    [];
 
   const [selectedAmount, setSelectedAmount] = useState<AmountPrice|null>(
     amounts.length > 0 ? amounts[0] : null
@@ -96,7 +100,9 @@ export default function ProductCard({ p }: { p: P }) {
         {/* Amount selector — shown when picker is open */}
         {showPicker && amounts.length > 0 && (
           <div className="space-y-2">
-            <p className="font-sans text-xs font-semibold text-textDim uppercase tracking-widest">Select Amount</p>
+            <p className="font-sans text-xs font-semibold text-textDim uppercase tracking-widest">
+              {isQtyType ? "Select Quantity" : "Select Amount"}
+            </p>
             <div className="grid grid-cols-3 gap-1.5">
               {amounts.map(a => (
                 <button
@@ -144,8 +150,8 @@ export default function ProductCard({ p }: { p: P }) {
                 : "bg-green text-bg hover:bg-greenLo active:scale-95 shadow-lg shadow-green/20"
               }`}
             >
-              <span className="ms" style={{ fontSize: "16px" }}>{added ? "check" : amounts.length > 0 && !showPicker ? "tune" : "add_shopping_cart"}</span>
-              {added ? "Added!" : amounts.length > 0 && !showPicker ? "Select" : "Add"}
+              <span className="ms" style={{ fontSize: "16px" }}>{added ? "check" : amounts.length > 0 && !showPicker ? (isQtyType ? "tag" : "tune") : "add_shopping_cart"}</span>
+              {added ? "Added!" : amounts.length > 0 && !showPicker ? (isQtyType ? "Qty" : "Select") : "Add"}
             </button>
           </div>
         </div>

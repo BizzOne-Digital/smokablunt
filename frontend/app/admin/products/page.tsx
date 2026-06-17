@@ -17,17 +17,20 @@ const AMOUNTS_DEFAULT: AmountPrice[] = [
   { label:"3oz", price:0 },
 ];
 
-const EMPTY = {
-  name:"", category:"Indica", type:"flowers", price:0, stock:0, thc:0, description:"",
-  images:[] as {url:string;public_id:string}[], isActive:true, isFeatured:false, rating:0,
-  amounts:AMOUNTS_DEFAULT.map(a=>({...a})) as AmountPrice[], onSale:false,
-};
+// Edibles & Concentrates use quantity 1–5
+const AMOUNTS_QTY: AmountPrice[] = [
+  { label:"1", price:0 },
+  { label:"2", price:0 },
+  { label:"3", price:0 },
+  { label:"4", price:0 },
+  { label:"5", price:0 },
+];
 
-const inp = "w-full bg-bg border border-border rounded-2xl px-4 py-3 font-sans text-sm text-textPri placeholder:text-textDim focus:outline-none focus:border-green transition-colors";
-const lbl = "block font-sans text-xs font-semibold text-textDim uppercase tracking-widest mb-1.5";
+const WEIGHT_TYPES = ["flowers","pre-rolls"];
+const QTY_TYPES    = ["edibles","concentrates"];
 
 // Which types get amount pricing
-const HAS_AMOUNTS = ["flowers","pre-rolls","concentrates","edibles"];
+const HAS_AMOUNTS = [...WEIGHT_TYPES, ...QTY_TYPES];
 
 // Category options per type
 const CATS: Record<string,string[]> = {
@@ -39,6 +42,18 @@ const CATS: Record<string,string[]> = {
   sale:         ["Indica","Sativa","Hybrid","Edibles","Concentrate","Other"],
   promo:        ["Indica","Sativa","Hybrid","Edibles","Concentrate","Other"],
 };
+
+const defaultAmountsFor = (type: string) =>
+  QTY_TYPES.includes(type) ? AMOUNTS_QTY.map(a=>({...a})) : AMOUNTS_DEFAULT.map(a=>({...a}));
+
+const EMPTY = {
+  name:"", category:"Indica", type:"flowers", price:0, stock:0, thc:0, description:"",
+  images:[] as {url:string;public_id:string}[], isActive:true, isFeatured:false, rating:0,
+  amounts:AMOUNTS_DEFAULT.map(a=>({...a})) as AmountPrice[], onSale:false,
+};
+
+const inp = "w-full bg-bg border border-border rounded-2xl px-4 py-3 font-sans text-sm text-textPri placeholder:text-textDim focus:outline-none focus:border-green transition-colors";
+const lbl = "block font-sans text-xs font-semibold text-textDim uppercase tracking-widest mb-1.5";
 
 export default function AdminProducts() {
   const [products,  setProducts]  = useState<Product[]>([]);
@@ -59,22 +74,22 @@ export default function AdminProducts() {
 
   useEffect(() => { load(); }, [load]);
 
-  const openCreate = () => { setForm({...EMPTY, amounts: AMOUNTS_DEFAULT.map(a=>({...a}))}); setEditing(null); setShowForm(true); };
+  const openCreate = () => { setForm({...EMPTY, amounts: defaultAmountsFor("flowers")}); setEditing(null); setShowForm(true); };
   const openEdit   = (p: Product) => {
     setForm({
       name:p.name, category:p.category, type:p.type, price:p.price, stock:p.stock, thc:p.thc,
       description:p.description, images:p.images, isActive:p.isActive, isFeatured:p.isFeatured,
-      rating:p.rating, amounts: p.amounts?.length ? p.amounts : AMOUNTS_DEFAULT.map(a=>({...a})),
+      rating:p.rating, amounts: p.amounts?.length ? p.amounts : defaultAmountsFor(p.type),
       onSale: p.onSale||false,
     });
     setEditing(p); setShowForm(true);
   };
   const close = () => { setShowForm(false); setEditing(null); };
 
-  // When type changes, reset category to first valid option
+  // When type changes, reset category AND amounts to match new type
   const handleTypeChange = (t:string) => {
     const cats = CATS[t] || ["Other"];
-    setForm(p => ({...p, type:t, category:cats[0]}));
+    setForm(p => ({...p, type:t, category:cats[0], amounts: defaultAmountsFor(t)}));
   };
 
   const uploadImg = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -265,7 +280,9 @@ export default function AdminProducts() {
                 {/* Amount Pricing — only for relevant types */}
                 {showAmounts && (
                   <div>
-                    <label className={lbl}>Amount Pricing (set price per amount)</label>
+                    <label className={lbl}>
+                      {QTY_TYPES.includes(form.type) ? "Quantity Pricing (1–5 units)" : "Amount Pricing (set price per amount)"}
+                    </label>
                     <div className="space-y-2">
                       {form.amounts.map((a, i) => (
                         <div key={a.label} className="flex items-center gap-3 bg-bg border border-border rounded-2xl px-4 py-2.5">
