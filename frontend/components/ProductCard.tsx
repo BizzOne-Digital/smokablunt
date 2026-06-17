@@ -8,8 +8,8 @@ interface P {
   rating: number; description: string; image: string; thc: number; amounts?: AmountPrice[];
 }
 
-const WEIGHT_TYPES = ["flowers","pre-rolls"];
-const QTY_TYPES    = ["edibles","concentrates","accessories","sale","promo"];
+const WEIGHT_TYPES = ["flowers"];
+const QTY_TYPES    = ["pre-rolls", "concentrates", "edibles", "accessories"];
 
 export default function ProductCard({ p }: { p: P }) {
   const { addItem } = useCart();

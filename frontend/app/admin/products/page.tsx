@@ -28,8 +28,8 @@ const QTY_AMOUNTS: AmountPrice[] = [
   { label:"5", price:0 },
 ];
 
-const WEIGHT_TYPES = ["flowers", "pre-rolls"];
-const QTY_TYPES    = ["edibles", "concentrates", "accessories", "sale", "promo"];
+const WEIGHT_TYPES = ["flowers"];
+const QTY_TYPES    = ["pre-rolls", "concentrates", "edibles", "accessories"];
 const HAS_AMOUNTS  = [...WEIGHT_TYPES, ...QTY_TYPES];
 
 const defaultAmountsFor = (type: string): AmountPrice[] =>
