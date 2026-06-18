@@ -10,7 +10,7 @@ interface Product {
 }
 
 // ─── AMOUNT TEMPLATES ────────────────────────────────────────
-// Flowers & Pre-rolls → weight
+// Flowers → weight
 const WEIGHT_AMOUNTS: AmountPrice[] = [
   { label:"1/4", price:0 },
   { label:"1/2", price:0 },
@@ -19,23 +19,28 @@ const WEIGHT_AMOUNTS: AmountPrice[] = [
   { label:"3oz", price:0 },
 ];
 
-// Edibles, Concentrates, Accessories, Sale, Promo → quantity 1–5
-const QTY_AMOUNTS: AmountPrice[] = [
-  { label:"1", price:0 },
-  { label:"2", price:0 },
-  { label:"3", price:0 },
-  { label:"4", price:0 },
-  { label:"5", price:0 },
+// Pre-rolls → qty 1–5 + 10
+const QTY_AMOUNTS_PREROLL: AmountPrice[] = [
+  { label:"1",  price:0 }, { label:"2",  price:0 }, { label:"3",  price:0 },
+  { label:"4",  price:0 }, { label:"5",  price:0 }, { label:"10", price:0 },
 ];
 
-const WEIGHT_TYPES = ["flowers"];
-const QTY_TYPES    = ["pre-rolls", "concentrates", "edibles", "accessories"];
-const HAS_AMOUNTS  = [...WEIGHT_TYPES, ...QTY_TYPES];
+// Edibles, Concentrates, Accessories → qty 1–5
+const QTY_AMOUNTS: AmountPrice[] = [
+  { label:"1", price:0 }, { label:"2", price:0 }, { label:"3", price:0 },
+  { label:"4", price:0 }, { label:"5", price:0 },
+];
 
-const defaultAmountsFor = (type: string): AmountPrice[] =>
-  WEIGHT_TYPES.includes(type)
-    ? WEIGHT_AMOUNTS.map(a => ({ ...a }))
-    : QTY_AMOUNTS.map(a => ({ ...a }));
+const WEIGHT_TYPES  = ["flowers"];
+const PREROLL_TYPES = ["pre-rolls"];
+const QTY_TYPES     = ["concentrates", "edibles", "accessories"];
+const HAS_AMOUNTS   = [...WEIGHT_TYPES, ...PREROLL_TYPES, ...QTY_TYPES];
+
+const defaultAmountsFor = (type: string): AmountPrice[] => {
+  if (WEIGHT_TYPES.includes(type))   return WEIGHT_AMOUNTS.map(a => ({ ...a }));
+  if (PREROLL_TYPES.includes(type))  return QTY_AMOUNTS_PREROLL.map(a => ({ ...a }));
+  return QTY_AMOUNTS.map(a => ({ ...a }));
+};
 
 // ─── CATEGORY OPTIONS PER TYPE ───────────────────────────────
 const CATS: Record<string, string[]> = {
@@ -50,7 +55,7 @@ const CATS: Record<string, string[]> = {
 
 const EMPTY = {
   name: "", category: "Indica", type: "flowers",
-  price: 0, stock: 0, thc: 0, description: "",
+  price: 0, stock: 0, thc: 0, rating: 0, description: "",
   images: [] as { url: string; public_id: string }[],
   isActive: true as boolean, isFeatured: false as boolean, onSale: false as boolean,
   amounts: WEIGHT_AMOUNTS.map(a => ({ ...a })) as AmountPrice[],
@@ -124,9 +129,9 @@ export default function AdminProducts() {
       description: p.description, images: p.images,
       isActive: p.isActive, isFeatured: p.isFeatured,
       onSale: p.onSale ?? false,
-      rating: (p as any).rating ?? 0,
+      rating: p.rating ?? 0,
       amounts,
-    } as any);
+    });
     setEditing(p);
     setShowForm(true);
   };
@@ -186,8 +191,9 @@ export default function AdminProducts() {
     p.type.toLowerCase().includes(search.toLowerCase())
   );
 
-  const isWeightType = WEIGHT_TYPES.includes(form.type);
-  const showAmounts  = HAS_AMOUNTS.includes(form.type);
+  const isWeightType   = WEIGHT_TYPES.includes(form.type);
+  const isPrerollType  = PREROLL_TYPES.includes(form.type);
+  const showAmounts    = HAS_AMOUNTS.includes(form.type);
 
   return (
     <div className="space-y-5 max-w-6xl">
@@ -367,9 +373,9 @@ export default function AdminProducts() {
                 {showAmounts && (
                   <div>
                     <label className={lbl}>
-                      {isWeightType
-                        ? "💊 Amount Pricing — 1/4 · 1/2 · oz · 2oz · 3oz"
-                        : "🔢 Quantity Pricing — 1 · 2 · 3 · 4 · 5 units"}
+                      {isWeightType  ? "💊 Amount Pricing — 1/4 · 1/2 · oz · 2oz · 3oz"
+                       : isPrerollType ? "🚬 Quantity — 1 · 2 · 3 · 4 · 5 · 10 units"
+                       :                 "🔢 Quantity Pricing — 1 · 2 · 3 · 4 · 5 units"}
                     </label>
                     <div className="space-y-2">
                       {form.amounts.map((a, i) => (

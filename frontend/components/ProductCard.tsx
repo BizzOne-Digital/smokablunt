@@ -8,8 +8,9 @@ interface P {
   rating: number; description: string; image: string; thc: number; amounts?: AmountPrice[];
 }
 
-const WEIGHT_TYPES = ["flowers"];
-const QTY_TYPES    = ["pre-rolls", "concentrates", "edibles", "accessories"];
+const WEIGHT_TYPES  = ["flowers"];
+const PREROLL_TYPES = ["pre-rolls"];
+const QTY_TYPES     = ["concentrates", "edibles", "accessories"];
 
 export default function ProductCard({ p }: { p: P }) {
   const { addItem } = useCart();
@@ -17,28 +18,24 @@ export default function ProductCard({ p }: { p: P }) {
   const [showPicker, setShowPicker] = useState(false);
   const [qty,        setQty]        = useState(1);
 
-  const isWeight = WEIGHT_TYPES.includes(p.type?.toLowerCase());
-  const isQty    = QTY_TYPES.includes(p.type?.toLowerCase());
+  const isWeight  = WEIGHT_TYPES.includes(p.type?.toLowerCase());
+  const isPreroll = PREROLL_TYPES.includes(p.type?.toLowerCase());
+  const isQty     = QTY_TYPES.includes(p.type?.toLowerCase());
 
-  // Build picker options
   const buildAmounts = (): AmountPrice[] => {
-    // If product has amounts with real prices, use them
     if (p.amounts?.some(a => a.price > 0)) return p.amounts!;
-    // Flowers / Pre-rolls — weight picker with base price
-    if (isWeight) return [
-      { label:"1/4", price: p.price },
-      { label:"1/2", price: p.price },
-      { label:"oz",  price: p.price },
-      { label:"2oz", price: p.price },
-      { label:"3oz", price: p.price },
+    if (isWeight)  return [
+      { label:"1/4", price:p.price }, { label:"1/2", price:p.price },
+      { label:"oz",  price:p.price }, { label:"2oz", price:p.price }, { label:"3oz", price:p.price },
     ];
-    // Edibles / Concentrates / Accessories — qty 1–5 with base price × qty
-    if (isQty) return [1,2,3,4,5].map(n => ({ label: String(n), price: p.price }));
+    if (isPreroll) return [1,2,3,4,5,10].map(n => ({ label:String(n), price:p.price }));
+    if (isQty)     return [1,2,3,4,5].map(n => ({ label:String(n), price:p.price }));
     return [];
   };
 
   const amounts = buildAmounts();
   const hasPicker = amounts.length > 0;
+  const isQtyPicker = isPreroll || isQty;
 
   const [selected, setSelected] = useState<AmountPrice | null>(
     hasPicker ? amounts[0] : null
@@ -47,7 +44,7 @@ export default function ProductCard({ p }: { p: P }) {
   // Price displayed: selected amount price, or base price
   const displayPrice = selected ? (selected.price > 0 ? selected.price : p.price) : p.price;
   // For qty types, total = price × qty
-  const totalPrice = isQty && selected ? displayPrice * qty : displayPrice;
+  const totalPrice = isQtyPicker && selected ? displayPrice * qty : displayPrice;
 
   const catStyle = {
     Indica: "bg-purple-500/10 text-purple-400",
@@ -61,7 +58,7 @@ export default function ProductCard({ p }: { p: P }) {
       id: p.id, name: p.name,
       price: totalPrice,
       category: p.category, image: p.image,
-      amount: selected ? (isQty ? `×${selected.label}` : selected.label) : "1",
+      amount: selected ? (isQtyPicker ? `×${selected.label}` : selected.label) : "1",
     });
     setAdded(true); setShowPicker(false);
     setTimeout(() => setAdded(false), 1600);
@@ -111,7 +108,7 @@ export default function ProductCard({ p }: { p: P }) {
         {showPicker && hasPicker && (
           <div className="space-y-2">
             <p className="font-sans text-xs font-semibold text-textDim uppercase tracking-widest">
-              {isQty ? "Select Quantity" : "Select Amount"}
+              {isQtyPicker ? "Select Quantity" : "Select Amount"}
             </p>
             {/* Amount/Qty grid */}
             <div className="grid grid-cols-3 gap-1.5">
@@ -128,7 +125,7 @@ export default function ProductCard({ p }: { p: P }) {
               })}
             </div>
             {/* Quantity stepper — only for qty types */}
-            {isQty && (
+            {isQtyPicker && (
               <div className="flex items-center justify-between bg-bg border border-border rounded-xl px-3 py-2">
                 <span className="font-sans text-xs text-textSec">Units</span>
                 <div className="flex items-center gap-3">
@@ -151,10 +148,10 @@ export default function ProductCard({ p }: { p: P }) {
         <div className="flex items-center justify-between pt-1 border-t border-border">
           <div>
             <p className="font-sans text-[10px] text-textDim uppercase tracking-wider">
-              {showPicker && isQty ? "Total" : "From"}
+              {showPicker && isQtyPicker ? "Total" : "From"}
             </p>
             <p className="font-title text-xl font-bold text-textPri">
-              {showPicker && isQty ? totalPrice : displayPrice}
+              {showPicker && isQtyPicker ? totalPrice : displayPrice}
             </p>
           </div>
           <div className="flex gap-2">
@@ -169,9 +166,9 @@ export default function ProductCard({ p }: { p: P }) {
                 added ? "bg-greenBg border border-green text-green" : "bg-green text-bg hover:bg-greenLo active:scale-95 shadow-lg shadow-green/20"
               }`}>
               <span className="ms" style={{fontSize:"16px"}}>
-                {added ? "check" : hasPicker && !showPicker ? (isQty ? "tag" : "tune") : "add_shopping_cart"}
+                {added ? "check" : hasPicker && !showPicker ? (isQtyPicker ? "tag" : "tune") : "add_shopping_cart"}
               </span>
-              {added ? "Added!" : hasPicker && !showPicker ? (isQty ? "Qty" : "Select") : "Add"}
+              {added ? "Added!" : hasPicker && !showPicker ? (isQtyPicker ? "Qty" : "Select") : "Add"}
             </button>
           </div>
         </div>
