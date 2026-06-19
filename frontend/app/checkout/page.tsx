@@ -171,15 +171,10 @@ export default function CheckoutPage() {
                   <textarea rows={2} value={form.notes} onChange={e => set("notes", e.target.value)} className={`${inp} resize-none`} placeholder="Buzzer code, gate code..." />
                 </div>
 
-                {/* ── No payment section — removed ── */}
-                <div className="p-4 bg-greenBg border border-green/20 rounded-2xl">
-                  <div className="flex items-center gap-3">
-                    <span className="ms text-green" style={{ fontSize:"22px" }}>payments</span>
-                    <div>
-                      <p className="font-sans text-sm font-semibold text-textPri">Cash on Delivery</p>
-                      <p className="font-sans text-xs text-textSec">Pay when your order arrives</p>
-                    </div>
-                  </div>
+                {/* ── Enjoy message ── */}
+                <div className="p-4 bg-greenBg border border-green/20 rounded-2xl text-center">
+                  <p className="font-title text-base font-semibold text-green">Enjoy & Have a Nice Day 🌿</p>
+                  <p className="font-sans text-xs text-textSec mt-1">Same day delivery · 19+ ID required</p>
                 </div>
 
                 <button
@@ -216,7 +211,7 @@ export default function CheckoutPage() {
                   </div>
                   <div className="flex justify-between">
                     <span className="text-textSec">Payment</span>
-                    <span className="text-textPri">Cash on Delivery</span>
+                    <span className="text-textPri">Cash · Enjoy & Have a Nice Day 🌿</span>
                   </div>
                 </div>
 

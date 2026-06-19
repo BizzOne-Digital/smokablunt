@@ -18,45 +18,45 @@ export default function ProductCard({ p }: { p: P }) {
   const [showPicker, setShowPicker] = useState(false);
   const [qty,        setQty]        = useState(1);
 
-  const isWeight  = WEIGHT_TYPES.includes(p.type?.toLowerCase());
-  const isPreroll = PREROLL_TYPES.includes(p.type?.toLowerCase());
-  const isQty     = QTY_TYPES.includes(p.type?.toLowerCase());
+  const isWeight    = WEIGHT_TYPES.includes(p.type?.toLowerCase());
+  const isPreroll   = PREROLL_TYPES.includes(p.type?.toLowerCase());
+  const isQty       = QTY_TYPES.includes(p.type?.toLowerCase());
+  const isQtyPicker = isPreroll || isQty;
 
+  // Build amounts with correct per-label prices
+  // If saved price for a label is 0, fallback to base price
   const buildAmounts = (): AmountPrice[] => {
-    if (p.amounts?.some(a => a.price > 0)) return p.amounts!;
-    if (isWeight)  return [
-      { label:"1/4", price:p.price }, { label:"1/2", price:p.price },
-      { label:"oz",  price:p.price }, { label:"2oz", price:p.price }, { label:"3oz", price:p.price },
-    ];
-    if (isPreroll) return [1,2,3,4,5,10].map(n => ({ label:String(n), price:p.price }));
-    if (isQty)     return [1,2,3,4,5].map(n => ({ label:String(n), price:p.price }));
+    const resolve = (label: string) => {
+      const saved = p.amounts?.find(a => a.label === label);
+      return { label, price: saved && saved.price > 0 ? saved.price : p.price };
+    };
+    if (isWeight)  return ["1/4","1/2","oz","2oz","3oz"].map(resolve);
+    if (isPreroll) return ["1","2","3","4","5","10"].map(resolve);
+    if (isQty)     return ["1","2","3","4","5"].map(resolve);
     return [];
   };
 
-  const amounts = buildAmounts();
-  const hasPicker = amounts.length > 0;
-  const isQtyPicker = isPreroll || isQty;
+  const amounts    = buildAmounts();
+  const hasPicker  = amounts.length > 0;
+  const hasAnyPrice = p.price > 0 || (p.amounts?.some(a => a.price > 0) ?? false);
 
   const [selected, setSelected] = useState<AmountPrice | null>(
     hasPicker ? amounts[0] : null
   );
 
-  // Price displayed: selected amount price, or base price
-  const displayPrice = selected ? (selected.price > 0 ? selected.price : p.price) : p.price;
-  // For qty types, total = price × qty
-  const totalPrice = isQtyPicker && selected ? displayPrice * qty : displayPrice;
+  const displayPrice = selected?.price ?? p.price;
+  const totalPrice   = isQtyPicker && selected ? displayPrice * qty : displayPrice;
 
-  const catStyle = {
+  const catStyle = ({
     Indica: "bg-purple-500/10 text-purple-400",
     Sativa: "bg-yellow-500/10 text-yellow-400",
     Hybrid: "bg-green/10 text-green",
-  }[p.category] || "bg-green/10 text-green";
+  } as Record<string,string>)[p.category] || "bg-green/10 text-green";
 
   const handleAdd = () => {
     if (hasPicker && !showPicker) { setShowPicker(true); return; }
     addItem({
-      id: p.id, name: p.name,
-      price: totalPrice,
+      id: p.id, name: p.name, price: totalPrice,
       category: p.category, image: p.image,
       amount: selected ? (isQtyPicker ? `×${selected.label}` : selected.label) : "1",
     });
@@ -66,7 +66,6 @@ export default function ProductCard({ p }: { p: P }) {
 
   return (
     <article className="group bg-card border border-border rounded-3xl overflow-hidden hover:border-borderHi hover:shadow-xl hover:shadow-black/30 transition-all duration-300 flex flex-col">
-      {/* Image */}
       <div className="relative h-56 overflow-hidden bg-bg flex-shrink-0">
         <img
           src={p.image || "https://images.unsplash.com/photo-1603909223429-69bb7101f420?w=600&q=80"}
@@ -87,7 +86,6 @@ export default function ProductCard({ p }: { p: P }) {
         )}
       </div>
 
-      {/* Body */}
       <div className="p-5 flex flex-col flex-1 gap-3">
         <div>
           <div className="flex items-start justify-between gap-2">
@@ -104,38 +102,29 @@ export default function ProductCard({ p }: { p: P }) {
 
         <p className="font-sans text-sm text-textSec line-clamp-2 flex-1 leading-relaxed">{p.description}</p>
 
-        {/* Picker — shows when user taps Select/Qty */}
         {showPicker && hasPicker && (
           <div className="space-y-2">
             <p className="font-sans text-xs font-semibold text-textDim uppercase tracking-widest">
               {isQtyPicker ? "Select Quantity" : "Select Amount"}
             </p>
-            {/* Amount/Qty grid */}
             <div className="grid grid-cols-3 gap-1.5">
-              {amounts.map(a => {
-                const priceLabel = a.price > 0 ? a.price : p.price;
-                const isActive = selected?.label === a.label;
-                return (
-                  <button key={a.label} onClick={() => setSelected(a)}
-                    className={`py-2 px-1 rounded-xl font-sans text-xs font-semibold border transition-all text-center ${isActive ? "bg-green text-bg border-green" : "border-border text-textSec hover:border-green hover:text-green"}`}>
-                    <span className="block font-bold">{a.label}</span>
-                    <span className="block text-[9px] opacity-80 mt-0.5">{priceLabel}</span>
-                  </button>
-                );
-              })}
+              {amounts.map(a => (
+                <button key={a.label} onClick={() => setSelected(a)}
+                  className={`py-2 px-1 rounded-xl font-sans text-xs font-semibold border transition-all text-center ${selected?.label === a.label ? "bg-green text-bg border-green" : "border-border text-textSec hover:border-green hover:text-green"}`}>
+                  <span className="block font-bold">{a.label}</span>
+                  {hasAnyPrice && <span className="block text-[9px] opacity-80 mt-0.5">{a.price}</span>}
+                </button>
+              ))}
             </div>
-            {/* Quantity stepper — only for qty types */}
             {isQtyPicker && (
               <div className="flex items-center justify-between bg-bg border border-border rounded-xl px-3 py-2">
                 <span className="font-sans text-xs text-textSec">Units</span>
                 <div className="flex items-center gap-3">
-                  <button onClick={() => setQty(q => Math.max(1, q-1))}
-                    className="w-6 h-6 flex items-center justify-center text-textSec hover:text-green transition-colors">
+                  <button onClick={() => setQty(q => Math.max(1,q-1))} className="w-6 h-6 flex items-center justify-center text-textSec hover:text-green">
                     <span className="ms" style={{fontSize:"14px"}}>remove</span>
                   </button>
                   <span className="font-sans text-sm font-bold text-textPri w-5 text-center">{qty}</span>
-                  <button onClick={() => setQty(q => Math.min(5, q+1))}
-                    className="w-6 h-6 flex items-center justify-center text-textSec hover:text-green transition-colors">
+                  <button onClick={() => setQty(q => Math.min(10,q+1))} className="w-6 h-6 flex items-center justify-center text-textSec hover:text-green">
                     <span className="ms" style={{fontSize:"14px"}}>add</span>
                   </button>
                 </div>
@@ -144,15 +133,18 @@ export default function ProductCard({ p }: { p: P }) {
           </div>
         )}
 
-        {/* Price + Add Button */}
         <div className="flex items-center justify-between pt-1 border-t border-border">
           <div>
-            <p className="font-sans text-[10px] text-textDim uppercase tracking-wider">
-              {showPicker && isQtyPicker ? "Total" : "From"}
-            </p>
-            <p className="font-title text-xl font-bold text-textPri">
-              {showPicker && isQtyPicker ? totalPrice : displayPrice}
-            </p>
+            {hasAnyPrice && (
+              <>
+                <p className="font-sans text-[10px] text-textDim uppercase tracking-wider">
+                  {showPicker && isQtyPicker ? "Total" : "From"}
+                </p>
+                <p className="font-title text-xl font-bold text-textPri">
+                  {showPicker && isQtyPicker ? totalPrice : displayPrice}
+                </p>
+              </>
+            )}
           </div>
           <div className="flex gap-2">
             {showPicker && (
@@ -162,9 +154,7 @@ export default function ProductCard({ p }: { p: P }) {
               </button>
             )}
             <button onClick={handleAdd}
-              className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl font-sans text-xs font-bold uppercase tracking-wider transition-all duration-200 ${
-                added ? "bg-greenBg border border-green text-green" : "bg-green text-bg hover:bg-greenLo active:scale-95 shadow-lg shadow-green/20"
-              }`}>
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl font-sans text-xs font-bold uppercase tracking-wider transition-all duration-200 ${added ? "bg-greenBg border border-green text-green" : "bg-green text-bg hover:bg-greenLo active:scale-95 shadow-lg shadow-green/20"}`}>
               <span className="ms" style={{fontSize:"16px"}}>
                 {added ? "check" : hasPicker && !showPicker ? (isQtyPicker ? "tag" : "tune") : "add_shopping_cart"}
               </span>
