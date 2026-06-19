@@ -323,7 +323,7 @@ export default function AdminProducts() {
                 {/* Name */}
                 <div>
                   <label className={lbl}>Name *</label>
-                  <input required value={form.name}
+                  <input value={form.name}
                     onChange={e => setForm(p => ({ ...p, name: e.target.value }))}
                     className={inp} placeholder="e.g. Ghost OG" />
                 </div>
@@ -402,7 +402,7 @@ export default function AdminProducts() {
                 {/* Description */}
                 <div>
                   <label className={lbl}>Description *</label>
-                  <textarea required rows={3} value={form.description}
+                  <textarea rows={3} value={form.description}
                     onChange={e => setForm(p => ({ ...p, description: e.target.value }))}
                     className={`${inp} resize-none`}
                     placeholder="Describe the strain, effects, and flavour..." />
