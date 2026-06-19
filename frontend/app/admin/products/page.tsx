@@ -356,7 +356,7 @@ export default function AdminProducts() {
                 {/* Price + Stock + THC */}
                 <div className="grid grid-cols-3 gap-4">
                   <div>
-                    <label className={lbl}>Base Price *</label>
+                    <label className={lbl}>Base Price</label>
                     <NumInput value={form.price} onChange={v => setForm(p => ({ ...p, price: v }))} />
                   </div>
                   <div>

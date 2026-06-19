@@ -4,8 +4,8 @@ import { useCart } from "@/lib/CartContext";
 
 export default function CartDrawer({ open, onClose }: { open: boolean; onClose: () => void }) {
   const { items, removeItem, updateQty, totalPrice } = useCart();
-  const fee   = totalPrice >= 100 ? 0 : 5;
-  const total = totalPrice + fee;
+  
+  
 
   return (
     <>
@@ -67,18 +67,13 @@ export default function CartDrawer({ open, onClose }: { open: boolean; onClose: 
               <div className="flex justify-between font-sans text-sm"><span className="text-textSec">Subtotal</span><span className="text-textPri">{totalPrice.toFixed(2)}</span></div>
               <div className="flex justify-between font-sans text-sm">
                 <span className="text-textSec">Delivery</span>
-                <span className={fee === 0 ? "text-green font-semibold" : "text-textPri"}>{fee === 0 ? "FREE" : `${fee}.00`}</span>
+                <span className="text-green font-semibold">FREE</span>
               </div>
               <div className="flex justify-between font-title text-lg font-bold pt-2 border-t border-border">
                 <span className="text-textPri">Total</span>
-                <span className="text-green">{total.toFixed(2)}</span>
+                <span className="text-green">{totalPrice.toFixed(2)}</span>
               </div>
             </div>
-            {totalPrice < 100 && (
-              <p className="text-center font-sans text-xs text-textDim bg-bg rounded-xl py-2">
-                Add <span className="text-green font-bold">{(100 - totalPrice).toFixed(2)}</span> more for free delivery
-              </p>
-            )}
             <Link href="/checkout" onClick={onClose}
               className="w-full bg-green text-bg py-3.5 rounded-2xl font-sans text-sm font-bold uppercase tracking-widest hover:bg-greenLo transition-colors flex items-center justify-center gap-2">
               <span className="ms" style={{ fontSize: "18px" }}>local_shipping</span>
