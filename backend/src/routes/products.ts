@@ -52,10 +52,21 @@ router.get("/:id", async (req: Request, res: Response) => {
 // POST /api/products — admin
 router.post("/", protect, adminOnly, async (req: AuthRequest, res: Response) => {
   try {
-    const { name, price, type, category, description, thc, stock, isActive, isFeatured, images } = req.body;
-    if (!name || !price || !type || !category || !description)
-      return res.status(400).json({ error: "name, price, type, category, description required" });
-    const product = await Product.create({ name, price, type, category, description, thc, stock, isActive, isFeatured, images: images || [] });
+    const { name, price, type, category, description, thc, stock, isActive, isFeatured, images, amounts, onSale } = req.body;
+    if (!name || !type || !category)
+      return res.status(400).json({ error: "name, type, and category are required" });
+    const product = await Product.create({
+      name, type, category,
+      price:       price ?? 0,
+      description: description || "",
+      thc:         thc   ?? 0,
+      stock:       stock ?? 0,
+      isActive:    isActive  ?? true,
+      isFeatured:  isFeatured ?? false,
+      onSale:      onSale ?? false,
+      images:      images || [],
+      amounts:     amounts || [],
+    });
     res.status(201).json({ product });
   } catch (e: any) {
     res.status(500).json({ error: e.message });
@@ -65,7 +76,7 @@ router.post("/", protect, adminOnly, async (req: AuthRequest, res: Response) => 
 // PUT /api/products/:id — admin
 router.put("/:id", protect, adminOnly, async (req: AuthRequest, res: Response) => {
   try {
-    const product = await Product.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true });
+    const product = await Product.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: false });
     if (!product) return res.status(404).json({ error: "Not found" });
     res.json({ product });
   } catch (e: any) {
