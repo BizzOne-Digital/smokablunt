@@ -144,7 +144,7 @@ function ShopContent() {
                     <h2 className="font-title text-xl font-bold text-textPri">{g.label}</h2>
                     <span className="font-sans text-xs text-textDim bg-surface border border-border px-2.5 py-1 rounded-full">{g.items.length}</span>
                   </div>
-                  <div className="grid grid-cols-2 gap-3 md:gap-5">
+                  <div className="grid grid-cols-2 gap-3">
                     {g.items.map(p => <ProductCard key={p.id} p={p} />)}
                   </div>
                 </div>
@@ -160,7 +160,7 @@ function ShopContent() {
             </div>
           ) : (
             // Filtered view — 2 per row
-            <div className="grid grid-cols-2 gap-3 md:gap-5">
+            <div className="grid grid-cols-2 gap-3">
               {filtered.map(p => <ProductCard key={p.id} p={p} />)}
             </div>
           )}
