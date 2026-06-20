@@ -52,7 +52,7 @@ router.get("/:id", async (req: Request, res: Response) => {
 // POST /api/products — admin
 router.post("/", protect, adminOnly, async (req: AuthRequest, res: Response) => {
   try {
-    const { name, price, type, category, description, thc, stock, isActive, isFeatured, images, amounts, onSale } = req.body;
+    const { name, price, type, category, description, thc, stock, isActive, isFeatured, images, amounts, onSale, salePrice } = req.body;
     if (!name || !type || !category)
       return res.status(400).json({ error: "name, type, and category are required" });
     const product = await Product.create({
@@ -64,6 +64,7 @@ router.post("/", protect, adminOnly, async (req: AuthRequest, res: Response) => 
       isActive:    isActive  ?? true,
       isFeatured:  isFeatured ?? false,
       onSale:      onSale ?? false,
+      salePrice:   salePrice ?? 0,
       images:      images || [],
       amounts:     amounts || [],
     });

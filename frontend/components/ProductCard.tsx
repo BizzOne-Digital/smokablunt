@@ -4,11 +4,12 @@ import { useCart } from "@/lib/CartContext";
 
 interface AmountPrice { label: string; price: number; }
 interface P {
-  id: string; name: string; category: string; type: string; price: number;
-  rating: number; description: string; image: string; thc: number; amounts?: AmountPrice[];
+  id: string; name: string; category: string; type: string;
+  price: number; rating: number; description: string; image: string; thc: number;
+  amounts?: AmountPrice[]; onSale?: boolean; salePrice?: number;
 }
 
-const WEIGHT_TYPES  = ["flowers"];
+const WEIGHT_TYPES  = ["flowers", "sale"];
 const PREROLL_TYPES = ["pre-rolls"];
 const QTY_TYPES     = ["concentrates", "edibles", "accessories"];
 
@@ -23,10 +24,9 @@ export default function ProductCard({ p }: { p: P }) {
   const isQty       = QTY_TYPES.includes(p.type?.toLowerCase());
   const isQtyPicker = isPreroll || isQty;
 
-  // Build amounts with correct per-label prices
-  // If saved price for a label is 0, fallback to base price
+  // Build amounts — each label gets its own saved price, fallback to base price only if 0
   const buildAmounts = (): AmountPrice[] => {
-    const resolve = (label: string) => {
+    const resolve = (label: string): AmountPrice => {
       const saved = p.amounts?.find(a => a.label === label);
       return { label, price: saved && saved.price > 0 ? saved.price : p.price };
     };
@@ -36,16 +36,25 @@ export default function ProductCard({ p }: { p: P }) {
     return [];
   };
 
-  const amounts    = buildAmounts();
-  const hasPicker  = amounts.length > 0;
-  const hasAnyPrice = p.price > 0 || (p.amounts?.some(a => a.price > 0) ?? false);
+  const amounts     = buildAmounts();
+  const hasPicker   = amounts.length > 0;
+  const hasAnyPrice = p.price > 0 || p.amounts?.some(a => a.price > 0);
+
+  // Min and max price for "from X – Y" display
+  const prices    = amounts.map(a => a.price).filter(x => x > 0);
+  const minPrice  = prices.length ? Math.min(...prices) : p.price;
+  const maxPrice  = prices.length ? Math.max(...prices) : p.price;
+  const priceRange = prices.length > 1 && minPrice !== maxPrice;
 
   const [selected, setSelected] = useState<AmountPrice | null>(
     hasPicker ? amounts[0] : null
   );
 
   const displayPrice = selected?.price ?? p.price;
-  const totalPrice   = isQtyPicker && selected ? displayPrice * qty : displayPrice;
+  const totalPrice   = isQtyPicker ? displayPrice * qty : displayPrice;
+
+  // Sale price display
+  const hasOldPrice = p.onSale && p.salePrice && p.salePrice > 0 && p.salePrice < p.price;
 
   const catStyle = ({
     Indica: "bg-purple-500/10 text-purple-400",
@@ -65,67 +74,60 @@ export default function ProductCard({ p }: { p: P }) {
   };
 
   return (
-    <article className="group bg-card border border-border rounded-3xl overflow-hidden hover:border-borderHi hover:shadow-xl hover:shadow-black/30 transition-all duration-300 flex flex-col">
-      <div className="relative h-56 overflow-hidden bg-bg flex-shrink-0">
+    <article className="group bg-card border border-border rounded-2xl md:rounded-3xl overflow-hidden hover:border-borderHi hover:shadow-xl hover:shadow-black/30 transition-all duration-300 flex flex-col">
+      {/* Image */}
+      <div className="relative aspect-square overflow-hidden bg-bg flex-shrink-0">
         <img
           src={p.image || "https://images.unsplash.com/photo-1603909223429-69bb7101f420?w=600&q=80"}
           alt={p.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
           loading="lazy"
           onError={e => { (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1603909223429-69bb7101f420?w=600&q=80"; }}
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-card/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-        <div className="absolute top-3 left-3">
-          <span className={`px-2.5 py-1 rounded-full font-sans text-[10px] font-bold uppercase tracking-wider backdrop-blur-sm ${catStyle}`}>
+        <div className="absolute top-2 left-2 flex flex-wrap gap-1">
+          <span className={`px-2 py-0.5 rounded-full font-sans text-[9px] font-bold uppercase tracking-wider backdrop-blur-sm ${catStyle}`}>
             {p.category}
           </span>
+          {p.onSale && <span className="bg-red-500 text-white px-2 py-0.5 rounded-full font-sans text-[9px] font-bold">SALE</span>}
         </div>
         {p.thc > 0 && (
-          <div className="absolute top-3 right-3 bg-black/50 backdrop-blur-sm px-2 py-1 rounded-full">
-            <span className="font-sans text-[10px] font-semibold text-textSec">THC {p.thc}%</span>
+          <div className="absolute top-2 right-2 bg-black/60 backdrop-blur-sm px-1.5 py-0.5 rounded-full">
+            <span className="font-sans text-[9px] font-semibold text-textSec">THC {p.thc}%</span>
           </div>
         )}
       </div>
 
-      <div className="p-5 flex flex-col flex-1 gap-3">
+      {/* Body */}
+      <div className="p-3 md:p-4 flex flex-col flex-1 gap-2">
         <div>
-          <div className="flex items-start justify-between gap-2">
-            <h2 className="font-title text-base font-semibold text-textPri leading-snug line-clamp-1">{p.name}</h2>
-            {p.rating > 0 && (
-              <div className="flex items-center gap-1 flex-shrink-0 mt-0.5">
-                <span className="ms ms-fill text-yellow-400" style={{fontSize:"13px"}}>star</span>
-                <span className="font-sans text-xs font-semibold text-textSec">{p.rating.toFixed(1)}</span>
-              </div>
-            )}
-          </div>
-          <p className="font-sans text-xs text-textDim uppercase tracking-wider mt-1">{p.type}</p>
+          <h2 className="font-title text-sm md:text-base font-semibold text-textPri leading-snug line-clamp-2">{p.name}</h2>
+          <p className="font-sans text-[10px] text-textDim uppercase tracking-wider mt-0.5">{p.type}</p>
         </div>
 
-        <p className="font-sans text-sm text-textSec line-clamp-2 flex-1 leading-relaxed">{p.description}</p>
-
+        {/* Amount picker */}
         {showPicker && hasPicker && (
-          <div className="space-y-2">
-            <p className="font-sans text-xs font-semibold text-textDim uppercase tracking-widest">
-              {isQtyPicker ? "Select Quantity" : "Select Amount"}
+          <div className="space-y-1.5">
+            <p className="font-sans text-[10px] font-semibold text-textDim uppercase tracking-widest">
+              {isQtyPicker ? "Quantity" : "Amount"}
             </p>
-            <div className="grid grid-cols-3 gap-1.5">
+            <div className="grid grid-cols-3 gap-1">
               {amounts.map(a => (
                 <button key={a.label} onClick={() => setSelected(a)}
-                  className={`py-2 px-1 rounded-xl font-sans text-xs font-semibold border transition-all text-center ${selected?.label === a.label ? "bg-green text-bg border-green" : "border-border text-textSec hover:border-green hover:text-green"}`}>
+                  className={`py-1.5 px-1 rounded-lg font-sans text-[10px] font-semibold border transition-all text-center ${selected?.label === a.label ? "bg-green text-bg border-green" : "border-border text-textSec hover:border-green hover:text-green"}`}>
                   <span className="block font-bold">{a.label}</span>
-                  {hasAnyPrice && <span className="block text-[9px] opacity-80 mt-0.5">{a.price}</span>}
+                  {hasAnyPrice && <span className="block text-[9px] opacity-80">{a.price}</span>}
                 </button>
               ))}
             </div>
             {isQtyPicker && (
-              <div className="flex items-center justify-between bg-bg border border-border rounded-xl px-3 py-2">
-                <span className="font-sans text-xs text-textSec">Units</span>
-                <div className="flex items-center gap-3">
-                  <button onClick={() => setQty(q => Math.max(1,q-1))} className="w-6 h-6 flex items-center justify-center text-textSec hover:text-green">
-                    <span className="ms" style={{fontSize:"14px"}}>remove</span>
+              <div className="flex items-center justify-between bg-bg border border-border rounded-xl px-2 py-1.5">
+                <span className="font-sans text-[10px] text-textSec">Units</span>
+                <div className="flex items-center gap-2">
+                  <button onClick={() => setQty(q => Math.max(1,q-1))} className="w-5 h-5 flex items-center justify-center text-textSec hover:text-green">
+                    <span className="ms" style={{fontSize:"12px"}}>remove</span>
                   </button>
-                  <span className="font-sans text-sm font-bold text-textPri w-5 text-center">{qty}</span>
-                  <button onClick={() => setQty(q => Math.min(10,q+1))} className="w-6 h-6 flex items-center justify-center text-textSec hover:text-green">
-                    <span className="ms" style={{fontSize:"14px"}}>add</span>
+                  <span className="font-sans text-xs font-bold text-textPri w-4 text-center">{qty}</span>
+                  <button onClick={() => setQty(q => Math.min(10,q+1))} className="w-5 h-5 flex items-center justify-center text-textSec hover:text-green">
+                    <span className="ms" style={{fontSize:"12px"}}>add</span>
                   </button>
                 </div>
               </div>
@@ -133,29 +135,41 @@ export default function ProductCard({ p }: { p: P }) {
           </div>
         )}
 
-        <div className="flex items-center justify-between pt-1 border-t border-border">
+        {/* Price + Button */}
+        <div className="flex items-center justify-between pt-1 border-t border-border mt-auto">
           <div>
             {hasAnyPrice && (
               <>
-                <p className="font-sans text-[10px] text-textDim uppercase tracking-wider">
-                  {showPicker && isQtyPicker ? "Total" : "From"}
-                </p>
-                <p className="font-title text-xl font-bold text-textPri">
-                  {showPicker && isQtyPicker ? totalPrice : displayPrice}
-                </p>
+                {hasOldPrice ? (
+                  <>
+                    <p className="font-sans text-[9px] line-through text-textDim">{p.price}</p>
+                    <p className="font-title text-base font-bold text-red-400">{p.salePrice}</p>
+                  </>
+                ) : (
+                  <>
+                    <p className="font-sans text-[9px] text-textDim uppercase">
+                      {showPicker && isQtyPicker ? "Total" : priceRange && !showPicker ? "From" : ""}
+                    </p>
+                    <p className="font-title text-base font-bold text-textPri">
+                      {showPicker
+                        ? (isQtyPicker ? totalPrice : displayPrice)
+                        : priceRange ? `${minPrice} – ${maxPrice}` : displayPrice}
+                    </p>
+                  </>
+                )}
               </>
             )}
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-1.5">
             {showPicker && (
               <button onClick={() => setShowPicker(false)}
-                className="flex items-center gap-1 px-3 py-2.5 rounded-2xl font-sans text-xs font-semibold border border-border text-textSec hover:border-borderHi transition-all">
-                <span className="ms" style={{fontSize:"14px"}}>close</span>
+                className="flex items-center gap-1 px-2.5 py-2 rounded-xl font-sans text-[10px] font-semibold border border-border text-textSec hover:border-borderHi transition-all">
+                <span className="ms" style={{fontSize:"12px"}}>close</span>
               </button>
             )}
             <button onClick={handleAdd}
-              className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl font-sans text-xs font-bold uppercase tracking-wider transition-all duration-200 ${added ? "bg-greenBg border border-green text-green" : "bg-green text-bg hover:bg-greenLo active:scale-95 shadow-lg shadow-green/20"}`}>
-              <span className="ms" style={{fontSize:"16px"}}>
+              className={`flex items-center gap-1.5 px-3 py-2 rounded-xl font-sans text-[10px] font-bold uppercase tracking-wider transition-all duration-200 ${added ? "bg-greenBg border border-green text-green" : "bg-green text-bg hover:bg-greenLo active:scale-95 shadow-lg shadow-green/20"}`}>
+              <span className="ms" style={{fontSize:"14px"}}>
                 {added ? "check" : hasPicker && !showPicker ? (isQtyPicker ? "tag" : "tune") : "add_shopping_cart"}
               </span>
               {added ? "Added!" : hasPicker && !showPicker ? (isQtyPicker ? "Qty" : "Select") : "Add"}

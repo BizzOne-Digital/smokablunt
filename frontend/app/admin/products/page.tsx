@@ -6,7 +6,7 @@ interface AmountPrice { label: string; price: number; }
 interface Product {
   _id: string; name: string; category: string; type: string; price: number; stock: number; thc: number;
   description: string; images: { url: string; public_id: string }[]; isActive: boolean; isFeatured: boolean;
-  rating: number; amounts?: AmountPrice[]; onSale?: boolean;
+  rating: number; amounts?: AmountPrice[]; onSale?: boolean; salePrice?: number;
 }
 
 // ─── AMOUNT TEMPLATES ────────────────────────────────────────
@@ -31,7 +31,7 @@ const QTY_AMOUNTS: AmountPrice[] = [
   { label:"4", price:0 }, { label:"5", price:0 },
 ];
 
-const WEIGHT_TYPES  = ["flowers"];
+const WEIGHT_TYPES  = ["flowers", "sale", "promo"];
 const PREROLL_TYPES = ["pre-rolls"];
 const QTY_TYPES     = ["concentrates", "edibles", "accessories"];
 const HAS_AMOUNTS   = [...WEIGHT_TYPES, ...PREROLL_TYPES, ...QTY_TYPES];
@@ -131,6 +131,7 @@ export default function AdminProducts() {
       onSale: p.onSale ?? false,
       rating: p.rating ?? 0,
       amounts,
+      salePrice: p.salePrice ?? 0,
     });
     setEditing(p);
     setShowForm(true);
@@ -354,11 +355,18 @@ export default function AdminProducts() {
                 </div>
 
                 {/* Price + Stock + THC */}
-                <div className="grid grid-cols-3 gap-4">
+                <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className={lbl}>Base Price</label>
                     <NumInput value={form.price} onChange={v => setForm(p => ({ ...p, price: v }))} />
                   </div>
+                  <div>
+                    <label className={lbl}>Sale Price <span className="text-red-400">(on sale)</span></label>
+                    <NumInput value={form.salePrice ?? 0} onChange={v => setForm(p => ({ ...p, salePrice: v }))} />
+                    <p className="font-sans text-[10px] text-textDim mt-1">Set sale price + enable On Sale toggle</p>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className={lbl}>Stock</label>
                     <NumInput value={form.stock} onChange={v => setForm(p => ({ ...p, stock: v }))} />

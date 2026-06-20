@@ -15,31 +15,20 @@ export interface IProduct extends Document {
   isActive: boolean;
   isFeatured: boolean;
   onSale: boolean;
+  salePrice: number;
   amounts: { label: string; price: number }[];
   createdAt: Date;
   updatedAt: Date;
 }
 
-const TYPES      = ["flowers","pre-rolls","concentrates","edibles","accessories","sale","promo"];
-const CATEGORIES = [
-  // flowers / pre-rolls
-  "Indica","Sativa","Hybrid","Mixed",
-  // concentrates
-  "Shatter","Wax","Live Resin","Hash","Distillate",
-  // edibles
-  "Gummies","Chocolate","Beverage","Capsule",
-  // accessories
-  "Vaporizer","Pipe","Papers","Grinder",
-  // generic
-  "Other",
-];
+// All types and categories accepted — no enum restriction
 
 const S = new Schema<IProduct>(
   {
-    name:        { type: String, required: true, trim: true },
-    slug:        { type: String, unique: true, lowercase: true },
-    category:    { type: String, enum: CATEGORIES, required: true },
-    type:        { type: String, enum: TYPES, required: true },
+    name:        { type: String, default: "" },
+    slug:        { type: String, unique: true, sparse: true, lowercase: true },
+    category:    { type: String, default: "Other" },
+    type:        { type: String, default: "flowers" },
     price:       { type: Number, default: 0 },
     description: { type: String, default: "" },
     thc:         { type: Number, default: 0 },
@@ -50,6 +39,7 @@ const S = new Schema<IProduct>(
     isActive:    { type: Boolean, default: true },
     isFeatured:  { type: Boolean, default: false },
     onSale:      { type: Boolean, default: false },
+    salePrice:   { type: Number, default: 0 },
     amounts:     [{ label: { type: String }, price: { type: Number, default: 0 } }],
   },
   { timestamps: true }
