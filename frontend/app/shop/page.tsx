@@ -71,17 +71,19 @@ function ShopContent() {
     return list;
   }, [all, typeQ, activeTab, sort, search]);
 
-  // Group by type/category for "All" tab view
+  // Group by category for flowers, by type for others
   const grouped = useMemo(() => {
     if (activeTab !== "all" || typeQ !== "all" || search) return null;
     const groups: Record<string, ReturnType<typeof norm>[]> = {};
     filtered.forEach(p => {
-      const key = p.type.toLowerCase();
+      let key = p.type.toLowerCase();
+      // flowers split by category (Indica/Sativa/Hybrid)
+      if (key === "flowers") key = p.category.toLowerCase();
       if (!groups[key]) groups[key] = [];
       groups[key].push(p);
     });
-    // Sort groups by CAT_ORDER
-    return CAT_ORDER.filter(k => groups[k]?.length > 0).map(k => ({ key:k, label:CAT_LABELS[k]||k, items:groups[k] }));
+    return CAT_ORDER.filter(k => groups[k]?.length > 0)
+      .map(k => ({ key: k, label: CAT_LABELS[k] || k, items: groups[k] }));
   }, [filtered, activeTab, typeQ, search]);
 
   return (

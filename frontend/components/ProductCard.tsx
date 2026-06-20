@@ -24,10 +24,12 @@ export default function ProductCard({ p }: { p: P }) {
   const isQty       = QTY_TYPES.includes(p.type?.toLowerCase());
   const isQtyPicker = isPreroll || isQty;
 
-  // Build amounts — each label gets its own saved price, fallback to base price only if 0
+  // Build amounts — each label gets its own saved price
+  // For qty types: price per unit is fixed, qty stepper handles count
   const buildAmounts = (): AmountPrice[] => {
     const resolve = (label: string): AmountPrice => {
       const saved = p.amounts?.find(a => a.label === label);
+      // Use saved price if > 0, else fallback to base price
       return { label, price: saved && saved.price > 0 ? saved.price : p.price };
     };
     if (isWeight)  return ["1/4","1/2","oz","2oz","3oz"].map(resolve);
@@ -40,10 +42,9 @@ export default function ProductCard({ p }: { p: P }) {
   const hasPicker   = amounts.length > 0;
   const hasAnyPrice = p.price > 0 || p.amounts?.some(a => a.price > 0);
 
-  // Min and max price for "from X – Y" display
-  const prices    = amounts.map(a => a.price).filter(x => x > 0);
-  const minPrice  = prices.length ? Math.min(...prices) : p.price;
-  const maxPrice  = prices.length ? Math.max(...prices) : p.price;
+  const prices     = amounts.map(a => a.price).filter(x => x > 0);
+  const minPrice   = prices.length ? Math.min(...prices) : p.price;
+  const maxPrice   = prices.length ? Math.max(...prices) : p.price;
   const priceRange = prices.length > 1 && minPrice !== maxPrice;
 
   const [selected, setSelected] = useState<AmountPrice | null>(
@@ -51,7 +52,10 @@ export default function ProductCard({ p }: { p: P }) {
   );
 
   const displayPrice = selected?.price ?? p.price;
-  const totalPrice   = isQtyPicker ? displayPrice * qty : displayPrice;
+  // For qty types: total = unit price × selected qty number
+  // For weight: price is already the total
+  const selectedQty  = isQtyPicker && selected ? parseInt(selected.label) || 1 : 1;
+  const totalPrice   = isQtyPicker ? displayPrice * selectedQty : displayPrice;
 
   // Sale price display
   const hasOldPrice = p.onSale && p.salePrice && p.salePrice > 0 && p.salePrice < p.price;
@@ -117,20 +121,7 @@ export default function ProductCard({ p }: { p: P }) {
                 </button>
               ))}
             </div>
-            {isQtyPicker && (
-              <div className="flex items-center justify-between bg-bg border border-border rounded-xl px-2 py-1.5">
-                <span className="font-sans text-[10px] text-textSec">Units</span>
-                <div className="flex items-center gap-2">
-                  <button onClick={() => setQty(q => Math.max(1,q-1))} className="w-5 h-5 flex items-center justify-center text-textSec hover:text-green">
-                    <span className="ms" style={{fontSize:"12px"}}>remove</span>
-                  </button>
-                  <span className="font-sans text-xs font-bold text-textPri w-4 text-center">{qty}</span>
-                  <button onClick={() => setQty(q => Math.min(10,q+1))} className="w-5 h-5 flex items-center justify-center text-textSec hover:text-green">
-                    <span className="ms" style={{fontSize:"12px"}}>add</span>
-                  </button>
-                </div>
-              </div>
-            )}
+            {/* No separate units stepper — for qty types, selecting 1/2/3/4/5 IS the quantity */}
           </div>
         )}
 
