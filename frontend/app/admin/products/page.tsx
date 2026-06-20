@@ -53,12 +53,22 @@ const CATS: Record<string, string[]> = {
   "promo":        ["Indica", "Sativa", "Hybrid", "Gummies", "Shatter", "Other"],
 };
 
-const EMPTY = {
+interface FormState {
+  name: string; category: string; type: string;
+  price: number; stock: number; thc: number; rating: number; description: string;
+  images: { url: string; public_id: string }[];
+  isActive: boolean; isFeatured: boolean; onSale: boolean;
+  salePrice: number;
+  amounts: AmountPrice[];
+}
+
+const EMPTY: FormState = {
   name: "", category: "Indica", type: "flowers",
   price: 0, stock: 0, thc: 0, rating: 0, description: "",
-  images: [] as { url: string; public_id: string }[],
-  isActive: true as boolean, isFeatured: false as boolean, onSale: false as boolean,
-  amounts: WEIGHT_AMOUNTS.map(a => ({ ...a })) as AmountPrice[],
+  images: [],
+  isActive: true, isFeatured: false, onSale: false,
+  salePrice: 0,
+  amounts: WEIGHT_AMOUNTS.map(a => ({ ...a })),
 };
 
 const inp = "w-full bg-bg border border-border rounded-2xl px-4 py-3 font-sans text-sm text-textPri placeholder:text-textDim focus:outline-none focus:border-green transition-colors";
@@ -99,7 +109,7 @@ export default function AdminProducts() {
   const [search,    setSearch]    = useState("");
   const [showForm,  setShowForm]  = useState(false);
   const [editing,   setEditing]   = useState<Product | null>(null);
-  const [form,      setForm]      = useState<typeof EMPTY>({ ...EMPTY });
+  const [form, setForm] = useState<FormState>({ ...EMPTY });
   const [saving,    setSaving]    = useState(false);
   const [uploading, setUploading] = useState(false);
   const [deleting,  setDeleting]  = useState<string | null>(null);
