@@ -106,6 +106,10 @@ export default function ProductCard({ p }: { p: P }) {
           <p className="font-sans text-[10px] text-textDim uppercase tracking-wider mt-0.5">{p.type}</p>
         </div>
 
+        {p.description && (
+          <p className="font-sans text-xs text-textSec line-clamp-2 leading-relaxed">{p.description}</p>
+        )}
+
         {/* Amount picker */}
         {showPicker && hasPicker && (
           <div className="space-y-1.5">
