@@ -75,8 +75,7 @@ export default function ProductCard({ p }: { p: P }) {
 
   return (
     <article className="group bg-card border border-border rounded-2xl overflow-hidden hover:border-borderHi hover:shadow-xl hover:shadow-black/30 transition-all duration-300 flex flex-col">
-      {/* Image — square on all screens */}
-      <div className="relative aspect-square overflow-hidden bg-bg flex-shrink-0">
+      <div className="relative aspect-square md:h-56 md:aspect-auto overflow-hidden bg-bg flex-shrink-0">
         <img
           src={p.image || "https://images.unsplash.com/photo-1603909223429-69bb7101f420?w=600&q=80"}
           alt={p.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
@@ -97,7 +96,7 @@ export default function ProductCard({ p }: { p: P }) {
       </div>
 
       {/* Body */}
-      <div className="p-3 flex flex-col flex-1 gap-2">
+      <div className="p-3 md:p-5 flex flex-col flex-1 gap-2 md:gap-3">
         <div>
           <h2 className="font-title text-sm md:text-base font-semibold text-textPri leading-snug line-clamp-2">{p.name}</h2>
           <p className="font-sans text-[10px] text-textDim uppercase tracking-wider mt-0.5">{p.type}</p>
