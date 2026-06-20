@@ -31,14 +31,32 @@ const QTY_AMOUNTS: AmountPrice[] = [
   { label:"4", price:0 }, { label:"5", price:0 },
 ];
 
-const WEIGHT_TYPES  = ["flowers", "sale", "promo"];
+// Sale/Promo can be any product type, so give admin all common amount options.
+// Only the filled prices are saved and shown on the public site.
+const SALE_PROMO_AMOUNTS: AmountPrice[] = [
+  { label:"1/4", price:0 },
+  { label:"1/2", price:0 },
+  { label:"oz",  price:0 },
+  { label:"2oz", price:0 },
+  { label:"3oz", price:0 },
+  { label:"1",  price:0 },
+  { label:"2",  price:0 },
+  { label:"3",  price:0 },
+  { label:"4",  price:0 },
+  { label:"5",  price:0 },
+  { label:"10", price:0 },
+];
+
+const WEIGHT_TYPES  = ["flowers"];
 const PREROLL_TYPES = ["pre-rolls"];
 const QTY_TYPES     = ["concentrates", "edibles", "accessories"];
-const HAS_AMOUNTS   = [...WEIGHT_TYPES, ...PREROLL_TYPES, ...QTY_TYPES];
+const SALE_PROMO_TYPES = ["sale", "promo"];
+const HAS_AMOUNTS   = [...WEIGHT_TYPES, ...PREROLL_TYPES, ...QTY_TYPES, ...SALE_PROMO_TYPES];
 
 const defaultAmountsFor = (type: string): AmountPrice[] => {
-  if (WEIGHT_TYPES.includes(type))   return WEIGHT_AMOUNTS.map(a => ({ ...a }));
-  if (PREROLL_TYPES.includes(type))  return QTY_AMOUNTS_PREROLL.map(a => ({ ...a }));
+  if (SALE_PROMO_TYPES.includes(type)) return SALE_PROMO_AMOUNTS.map(a => ({ ...a }));
+  if (WEIGHT_TYPES.includes(type))     return WEIGHT_AMOUNTS.map(a => ({ ...a }));
+  if (PREROLL_TYPES.includes(type))    return QTY_AMOUNTS_PREROLL.map(a => ({ ...a }));
   return QTY_AMOUNTS.map(a => ({ ...a }));
 };
 
@@ -212,6 +230,7 @@ export default function AdminProducts() {
 
   const isWeightType   = WEIGHT_TYPES.includes(form.type);
   const isPrerollType  = PREROLL_TYPES.includes(form.type);
+  const isSalePromoType = SALE_PROMO_TYPES.includes(form.type);
   const showAmounts    = HAS_AMOUNTS.includes(form.type);
 
   return (
@@ -399,7 +418,8 @@ export default function AdminProducts() {
                 {showAmounts && (
                   <div>
                     <label className={lbl}>
-                      {isWeightType  ? "💊 Amount Pricing — 1/4 · 1/2 · oz · 2oz · 3oz"
+                      {isSalePromoType ? "🏷️ Sale Amount Pricing — choose any needed amount/quantity"
+                       : isWeightType  ? "💊 Amount Pricing — 1/4 · 1/2 · oz · 2oz · 3oz"
                        : isPrerollType ? "🚬 Quantity — 1 · 2 · 3 · 4 · 5 · 10 units"
                        :                 "🔢 Quantity Pricing — 1 · 2 · 3 · 4 · 5 units"}
                     </label>

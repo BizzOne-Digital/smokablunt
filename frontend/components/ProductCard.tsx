@@ -25,6 +25,26 @@ const cleanAmount = (a: AmountPrice) => ({
   price: Number(a.price || 0),
 });
 
+// Fallback for old Sale products where the admin wrote prices in description like:
+// 1/2 45
+// Oz 80
+// 2 oz 150
+// New products should use the Amount Pricing fields, but this keeps old sale items working too.
+const parseAmountsFromDescription = (description?: string): AmountPrice[] => {
+  if (!description) return [];
+  return description
+    .split(/\r?\n/)
+    .map(line => line.trim())
+    .map(line => {
+      const match = line.match(/^(1\/4|1\/2|\d+\s*oz|oz|\d+)\s*[-:]?\s*\$?(\d+(?:\.\d+)?)/i);
+      if (!match) return null;
+      const label = match[1].replace(/\s+/g, " ").replace(/^oz$/i, "oz");
+      const price = Number(match[2]);
+      return label && price > 0 ? { label, price } : null;
+    })
+    .filter(Boolean) as AmountPrice[];
+};
+
 export default function ProductCard({ p }: { p: P }) {
   const { addItem } = useCart();
   const [added, setAdded] = useState(false);
@@ -32,10 +52,14 @@ export default function ProductCard({ p }: { p: P }) {
 
   // Only show amounts that admin actually filled with price > 0.
   // This fixes 2-0 / 3-0 / 5-0 showing on the public site.
-  const amounts = useMemo(
-    () => (p.amounts || []).map(cleanAmount).filter(a => a.label && a.price > 0),
-    [p.amounts]
-  );
+  const amounts = useMemo(() => {
+    const saved = (p.amounts || []).map(cleanAmount).filter(a => a.label && a.price > 0);
+    if (saved.length > 0) return saved;
+    if (["sale", "promo"].includes(String(p.type || "").toLowerCase())) {
+      return parseAmountsFromDescription(p.description);
+    }
+    return [];
+  }, [p.amounts, p.description, p.type]);
 
   const hasAmounts = amounts.length > 0;
   const fallbackPrice = Number(p.salePrice && p.salePrice > 0 ? p.salePrice : p.price || 0);

@@ -32,6 +32,26 @@ const cleanAmount = (a: AmountPrice) => ({
   price: Number(a.price || 0),
 });
 
+// Fallback for old Sale products where the admin wrote prices in description like:
+// 1/2 45
+// Oz 80
+// 2 oz 150
+// New products should use the Amount Pricing fields, but this keeps old sale items working too.
+const parseAmountsFromDescription = (description?: string): AmountPrice[] => {
+  if (!description) return [];
+  return description
+    .split(/\r?\n/)
+    .map(line => line.trim())
+    .map(line => {
+      const match = line.match(/^(1\/4|1\/2|\d+\s*oz|oz|\d+)\s*[-:]?\s*\$?(\d+(?:\.\d+)?)/i);
+      if (!match) return null;
+      const label = match[1].replace(/\s+/g, " ").replace(/^oz$/i, "oz");
+      const price = Number(match[2]);
+      return label && price > 0 ? { label, price } : null;
+    })
+    .filter(Boolean) as AmountPrice[];
+};
+
 export default function ProductDetailPage() {
   const params = useParams();
   const productId = Array.isArray(params?.id) ? params.id[0] : String(params?.id || "");
@@ -59,10 +79,14 @@ export default function ProductDetailPage() {
       .finally(() => setLoading(false));
   }, [productId]);
 
-  const amounts = useMemo(
-    () => (product?.amounts || []).map(cleanAmount).filter(a => a.label && a.price > 0),
-    [product?.amounts]
-  );
+  const amounts = useMemo(() => {
+    const saved = (product?.amounts || []).map(cleanAmount).filter(a => a.label && a.price > 0);
+    if (saved.length > 0) return saved;
+    if (["sale", "promo"].includes(String(product?.type || "").toLowerCase())) {
+      return parseAmountsFromDescription(product?.description);
+    }
+    return [];
+  }, [product?.amounts, product?.description, product?.type]);
 
   useEffect(() => {
     if (amounts.length) setSelected(amounts[0]);
