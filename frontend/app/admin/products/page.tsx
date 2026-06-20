@@ -31,41 +31,31 @@ const QTY_AMOUNTS: AmountPrice[] = [
   { label:"4", price:0 }, { label:"5", price:0 },
 ];
 
-// Sale/Promo can be any product type, so give admin all common amount options.
-// Only the filled prices are saved and shown on the public site.
-const SALE_PROMO_AMOUNTS: AmountPrice[] = [
-  { label:"1/4", price:0 },
-  { label:"1/2", price:0 },
-  { label:"oz",  price:0 },
-  { label:"2oz", price:0 },
-  { label:"3oz", price:0 },
-  { label:"1",  price:0 },
-  { label:"2",  price:0 },
-  { label:"3",  price:0 },
-  { label:"4",  price:0 },
-  { label:"5",  price:0 },
-  { label:"10", price:0 },
+// Sale/Promo must have every available selection from all product types
+const ALL_SALE_AMOUNTS: AmountPrice[] = [
+  ...WEIGHT_AMOUNTS,
+  ...QTY_AMOUNTS_PREROLL,
 ];
 
+const SALE_TYPES    = ["sale", "promo"];
 const WEIGHT_TYPES  = ["flowers"];
 const PREROLL_TYPES = ["pre-rolls"];
 const QTY_TYPES     = ["concentrates", "edibles", "accessories"];
-const SALE_PROMO_TYPES = ["sale", "promo"];
-const HAS_AMOUNTS   = [...WEIGHT_TYPES, ...PREROLL_TYPES, ...QTY_TYPES, ...SALE_PROMO_TYPES];
+const HAS_AMOUNTS   = [...SALE_TYPES, ...WEIGHT_TYPES, ...PREROLL_TYPES, ...QTY_TYPES];
 
-const defaultAmountsFor = (type: string): AmountPrice[] => {
-  if (SALE_PROMO_TYPES.includes(type)) return SALE_PROMO_AMOUNTS.map(a => ({ ...a }));
-  if (WEIGHT_TYPES.includes(type))     return WEIGHT_AMOUNTS.map(a => ({ ...a }));
-  if (PREROLL_TYPES.includes(type))    return QTY_AMOUNTS_PREROLL.map(a => ({ ...a }));
-  return QTY_AMOUNTS.map(a => ({ ...a }));
+const mergeAmountTemplate = (template: AmountPrice[], saved?: AmountPrice[]): AmountPrice[] => {
+  return template.map(t => {
+    const existing = saved?.find(s => s.label.toLowerCase() === t.label.toLowerCase());
+    return { ...t, price: existing?.price ?? 0 };
+  });
 };
 
-const mergeAmountsFor = (type: string, saved?: AmountPrice[]): AmountPrice[] => {
-  const defaults = defaultAmountsFor(type);
-  return defaults.map(a => {
-    const match = saved?.find(x => x.label === a.label);
-    return match ? { label: a.label, price: Number(match.price) || 0 } : a;
-  });
+const defaultAmountsFor = (type: string, saved?: AmountPrice[]): AmountPrice[] => {
+  const t = type.toLowerCase();
+  if (SALE_TYPES.includes(t))    return mergeAmountTemplate(ALL_SALE_AMOUNTS, saved);
+  if (WEIGHT_TYPES.includes(t))  return mergeAmountTemplate(WEIGHT_AMOUNTS, saved);
+  if (PREROLL_TYPES.includes(t)) return mergeAmountTemplate(QTY_AMOUNTS_PREROLL, saved);
+  return mergeAmountTemplate(QTY_AMOUNTS, saved);
 };
 
 // ─── CATEGORY OPTIONS PER TYPE ───────────────────────────────
@@ -158,7 +148,7 @@ export default function AdminProducts() {
   };
 
   const openEdit = (p: Product) => {
-    const amounts = mergeAmountsFor(p.type, p.amounts);
+    const amounts = defaultAmountsFor(p.type, p.amounts);
     setForm({
       name: p.name, category: p.category, type: p.type,
       price: p.price, stock: p.stock, thc: p.thc,
@@ -178,7 +168,7 @@ export default function AdminProducts() {
   // ── when TYPE changes → switch amounts + reset category ──
   const handleTypeChange = (t: string) => {
     const cats    = CATS[t] || ["Other"];
-    const amounts = defaultAmountsFor(t);   // ← KEY: swaps 1/4…3oz ↔ 1…5
+    const amounts = defaultAmountsFor(t);   // Sale/Promo gets all selections; other types get their own template
     setForm(prev => ({ ...prev, type: t, category: cats[0], amounts }));
   };
 
@@ -196,7 +186,7 @@ export default function AdminProducts() {
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault(); setSaving(true);
-    const payload = { ...form, amounts: HAS_AMOUNTS.includes(form.type) ? form.amounts.filter(a => Number(a.price) > 0) : [] };
+    const payload = { ...form, amounts: HAS_AMOUNTS.includes(form.type) ? form.amounts : [] };
     try {
       const r = editing
         ? await api.put(`/products/${editing._id}`, payload)
@@ -228,9 +218,9 @@ export default function AdminProducts() {
     p.type.toLowerCase().includes(search.toLowerCase())
   );
 
+  const isSaleType     = SALE_TYPES.includes(form.type);
   const isWeightType   = WEIGHT_TYPES.includes(form.type);
   const isPrerollType  = PREROLL_TYPES.includes(form.type);
-  const isSalePromoType = SALE_PROMO_TYPES.includes(form.type);
   const showAmounts    = HAS_AMOUNTS.includes(form.type);
 
   return (
@@ -418,7 +408,7 @@ export default function AdminProducts() {
                 {showAmounts && (
                   <div>
                     <label className={lbl}>
-                      {isSalePromoType ? "🏷️ Sale Amount Pricing — choose any needed amount/quantity"
+                      {isSaleType    ? "🏷️ Sale Amount / Quantity Pricing — 1/4 · 1/2 · oz · 2oz · 3oz · 1 · 2 · 3 · 4 · 5 · 10"
                        : isWeightType  ? "💊 Amount Pricing — 1/4 · 1/2 · oz · 2oz · 3oz"
                        : isPrerollType ? "🚬 Quantity — 1 · 2 · 3 · 4 · 5 · 10 units"
                        :                 "🔢 Quantity Pricing — 1 · 2 · 3 · 4 · 5 units"}
