@@ -9,40 +9,39 @@ interface P {
   amounts?: AmountPrice[]; onSale?: boolean; salePrice?: number;
 }
 
-const WEIGHT_TYPES  = ["flowers", "sale"];
+const WEIGHT_TYPES  = ["flowers", "sale", "promo"];
 const PREROLL_TYPES = ["pre-rolls"];
 const QTY_TYPES     = ["concentrates", "edibles", "accessories"];
+
+// Default labels are only used when an old product has no saved amount list.
+// On the public site we only show options that have a price greater than 0.
+const WEIGHT_LABELS  = ["1/4","1/2","oz","2oz","3oz"];
+const PREROLL_LABELS = ["1","2","3","4","5","10"];
+const QTY_LABELS     = ["1","2","3","4","5"];
 
 export default function ProductCard({ p }: { p: P }) {
   const { addItem } = useCart();
   const [added,      setAdded]      = useState(false);
   const [showPicker, setShowPicker] = useState(false);
-  const [qty,        setQty]        = useState(1);
 
   const isWeight    = WEIGHT_TYPES.includes(p.type?.toLowerCase());
   const isPreroll   = PREROLL_TYPES.includes(p.type?.toLowerCase());
   const isQty       = QTY_TYPES.includes(p.type?.toLowerCase());
   const isQtyPicker = isPreroll || isQty;
 
-  // Build amounts — each label gets its own saved price
-  // For qty types: price per unit is fixed, qty stepper handles count
-  const buildAmounts = (): AmountPrice[] => {
-    const resolve = (label: string): AmountPrice => {
-      const saved = p.amounts?.find(a => a.label === label);
-      // Use saved price if > 0, else fallback to base price
-      return { label, price: saved && saved.price > 0 ? saved.price : p.price };
-    };
-    if (isWeight)  return ["1/4","1/2","oz","2oz","3oz"].map(resolve);
-    if (isPreroll) return ["1","2","3","4","5","10"].map(resolve);
-    if (isQty)     return ["1","2","3","4","5"].map(resolve);
-    return [];
-  };
+  const defaultLabels = isWeight ? WEIGHT_LABELS : isPreroll ? PREROLL_LABELS : isQty ? QTY_LABELS : [];
 
-  const amounts     = buildAmounts();
+  // Only priced options are active. Example: if only "1" has price 25,
+  // the customer sees only 1-25, not 2-0 / 3-0.
+  const amounts = (p.amounts?.length
+    ? p.amounts
+    : defaultLabels.map(label => ({ label, price: p.price }))
+  ).filter(a => Number(a.price) > 0);
+
   const hasPicker   = amounts.length > 0;
-  const hasAnyPrice = p.price > 0 || p.amounts?.some(a => a.price > 0);
+  const hasAnyPrice = p.price > 0 || amounts.length > 0;
 
-  const prices     = amounts.map(a => a.price).filter(x => x > 0);
+  const prices     = amounts.map(a => Number(a.price)).filter(x => x > 0);
   const minPrice   = prices.length ? Math.min(...prices) : p.price;
   const maxPrice   = prices.length ? Math.max(...prices) : p.price;
   const priceRange = prices.length > 1 && minPrice !== maxPrice;
@@ -52,10 +51,8 @@ export default function ProductCard({ p }: { p: P }) {
   );
 
   const displayPrice = selected?.price ?? p.price;
-  // For qty types: total = unit price × selected qty number
-  // For weight: price is already the total
-  const selectedQty  = isQtyPicker && selected ? parseInt(selected.label) || 1 : 1;
-  const totalPrice   = isQtyPicker ? displayPrice * selectedQty : displayPrice;
+  // Each saved amount/quantity price is the final total for that option.
+  const totalPrice   = displayPrice;
 
   // Sale price display
   const hasOldPrice = p.onSale && p.salePrice && p.salePrice > 0 && p.salePrice < p.price;
@@ -107,7 +104,7 @@ export default function ProductCard({ p }: { p: P }) {
         </div>
 
         {p.description && (
-          <p className="font-sans text-xs text-textSec line-clamp-2 leading-relaxed">{p.description}</p>
+          <p className="font-sans text-xs text-textSec leading-relaxed whitespace-pre-line break-words">{p.description}</p>
         )}
 
         {/* Amount/Qty Picker — absolute overlay so it doesn't affect grid layout */}
@@ -142,12 +139,10 @@ export default function ProductCard({ p }: { p: P }) {
                 ) : (
                   <>
                     <p className="font-sans text-[9px] text-textDim uppercase">
-                      {showPicker && isQtyPicker ? "Total" : priceRange && !showPicker ? "From" : ""}
+                      {showPicker ? "Total" : priceRange && !showPicker ? "From" : ""}
                     </p>
                     <p className="font-title text-base font-bold text-textPri">
-                      {showPicker
-                        ? (isQtyPicker ? totalPrice : displayPrice)
-                        : priceRange ? `${minPrice} – ${maxPrice}` : displayPrice}
+                      {showPicker ? totalPrice : priceRange ? `${minPrice} – ${maxPrice}` : displayPrice}
                     </p>
                   </>
                 )}

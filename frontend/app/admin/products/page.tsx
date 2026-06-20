@@ -42,6 +42,14 @@ const defaultAmountsFor = (type: string): AmountPrice[] => {
   return QTY_AMOUNTS.map(a => ({ ...a }));
 };
 
+const mergeAmountsFor = (type: string, saved?: AmountPrice[]): AmountPrice[] => {
+  const defaults = defaultAmountsFor(type);
+  return defaults.map(a => {
+    const match = saved?.find(x => x.label === a.label);
+    return match ? { label: a.label, price: Number(match.price) || 0 } : a;
+  });
+};
+
 // ─── CATEGORY OPTIONS PER TYPE ───────────────────────────────
 const CATS: Record<string, string[]> = {
   "flowers":      ["Indica", "Sativa", "Hybrid"],
@@ -132,7 +140,7 @@ export default function AdminProducts() {
   };
 
   const openEdit = (p: Product) => {
-    const amounts = p.amounts?.length ? p.amounts : defaultAmountsFor(p.type);
+    const amounts = mergeAmountsFor(p.type, p.amounts);
     setForm({
       name: p.name, category: p.category, type: p.type,
       price: p.price, stock: p.stock, thc: p.thc,
@@ -170,7 +178,7 @@ export default function AdminProducts() {
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault(); setSaving(true);
-    const payload = { ...form, amounts: HAS_AMOUNTS.includes(form.type) ? form.amounts : [] };
+    const payload = { ...form, amounts: HAS_AMOUNTS.includes(form.type) ? form.amounts.filter(a => Number(a.price) > 0) : [] };
     try {
       const r = editing
         ? await api.put(`/products/${editing._id}`, payload)
@@ -412,7 +420,7 @@ export default function AdminProducts() {
                       ))}
                     </div>
                     <p className="font-sans text-xs text-textDim mt-1.5">
-                      Leave 0 to use base price for that option.
+                      Leave 0/blank to hide that option from the public site.
                     </p>
                   </div>
                 )}
