@@ -69,9 +69,10 @@ export default function ContactPage() {
               <h2 className="font-title text-xl font-semibold text-textPri mb-6">Direct Contact</h2>
               <ul className="space-y-5">
                 {[
-                  { icon:"call",        lbl:"Phone",    val:"249-288-4892",            href:"tel:2492884892" },
-                  { icon:"mail",        lbl:"Email",    val:"smokablunt4you@gmail.com", href:"mailto:smokablunt4you@gmail.com" },
-                  { icon:"location_on", lbl:"Location", val:"Barrie, Ontario", href:"https://maps.google.com/?q=Barrie+Ontario" },
+                  { icon:"call",         lbl:"Phone",    val:"249-288-4892",  href:"tel:2492884892" },
+                  { icon:"sms",          lbl:"Text",     val:"249-288-4892",  href:"sms:2492884892" },
+                  { icon:"shopping_bag", lbl:"Order Online", val:"Order on our website", href:"/shop" },
+                  { icon:"location_on",  lbl:"Location", val:"Barrie, Ontario", href:"https://maps.google.com/?q=Barrie+Ontario" },
                 ].map(c => (
                   <li key={c.lbl} className="flex items-start gap-4">
                     <div className="w-10 h-10 rounded-2xl bg-greenBg border border-green/20 flex items-center justify-center flex-shrink-0">
