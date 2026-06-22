@@ -19,6 +19,21 @@ const WEIGHT_AMOUNTS: AmountPrice[] = [
   { label:"3oz", price:0 },
 ];
 
+// Sale / Promo → all available selections
+const SALE_AMOUNTS: AmountPrice[] = [
+  { label:"1/4", price:0 },
+  { label:"1/2", price:0 },
+  { label:"oz",  price:0 },
+  { label:"2oz", price:0 },
+  { label:"3oz", price:0 },
+  { label:"1", price:0 },
+  { label:"2", price:0 },
+  { label:"3", price:0 },
+  { label:"4", price:0 },
+  { label:"5", price:0 },
+  { label:"10", price:0 },
+];
+
 // Pre-rolls → qty 1–5 + 10
 const QTY_AMOUNTS_PREROLL: AmountPrice[] = [
   { label:"1",  price:0 }, { label:"2",  price:0 }, { label:"3",  price:0 },
@@ -31,30 +46,28 @@ const QTY_AMOUNTS: AmountPrice[] = [
   { label:"4", price:0 }, { label:"5", price:0 },
 ];
 
-// Sale/Promo must have every available selection from all product types
-const ALL_SALE_AMOUNTS: AmountPrice[] = [
-  ...WEIGHT_AMOUNTS,
-  ...QTY_AMOUNTS_PREROLL,
-];
-
-const SALE_TYPES    = ["sale", "promo"];
 const WEIGHT_TYPES  = ["flowers"];
+const SALE_TYPES    = ["sale", "promo"];
 const PREROLL_TYPES = ["pre-rolls"];
 const QTY_TYPES     = ["concentrates", "edibles", "accessories"];
-const HAS_AMOUNTS   = [...SALE_TYPES, ...WEIGHT_TYPES, ...PREROLL_TYPES, ...QTY_TYPES];
+const HAS_AMOUNTS   = [...WEIGHT_TYPES, ...SALE_TYPES, ...PREROLL_TYPES, ...QTY_TYPES];
 
-const mergeAmountTemplate = (template: AmountPrice[], saved?: AmountPrice[]): AmountPrice[] => {
-  return template.map(t => {
-    const existing = saved?.find(s => s.label.toLowerCase() === t.label.toLowerCase());
-    return { ...t, price: existing?.price ?? 0 };
-  });
+const normalizeLabel = (label: string) => {
+  const cleaned = label.toLowerCase().replace(/\s+/g, "").trim();
+  if (cleaned === "ounce" || cleaned === "1oz") return "oz";
+  return cleaned;
 };
 
+const mergeAmountTemplate = (template: AmountPrice[], saved?: AmountPrice[]) =>
+  template.map(t => {
+    const old = saved?.find(a => normalizeLabel(a.label) === normalizeLabel(t.label));
+    return { label: t.label, price: old?.price ?? 0 };
+  });
+
 const defaultAmountsFor = (type: string, saved?: AmountPrice[]): AmountPrice[] => {
-  const t = type.toLowerCase();
-  if (SALE_TYPES.includes(t))    return mergeAmountTemplate(ALL_SALE_AMOUNTS, saved);
-  if (WEIGHT_TYPES.includes(t))  return mergeAmountTemplate(WEIGHT_AMOUNTS, saved);
-  if (PREROLL_TYPES.includes(t)) return mergeAmountTemplate(QTY_AMOUNTS_PREROLL, saved);
+  if (SALE_TYPES.includes(type))    return mergeAmountTemplate(SALE_AMOUNTS, saved);
+  if (WEIGHT_TYPES.includes(type))  return mergeAmountTemplate(WEIGHT_AMOUNTS, saved);
+  if (PREROLL_TYPES.includes(type)) return mergeAmountTemplate(QTY_AMOUNTS_PREROLL, saved);
   return mergeAmountTemplate(QTY_AMOUNTS, saved);
 };
 
@@ -168,7 +181,7 @@ export default function AdminProducts() {
   // ── when TYPE changes → switch amounts + reset category ──
   const handleTypeChange = (t: string) => {
     const cats    = CATS[t] || ["Other"];
-    const amounts = defaultAmountsFor(t);   // Sale/Promo gets all selections; other types get their own template
+    const amounts = defaultAmountsFor(t);   // Sale/Promo gets all available selections
     setForm(prev => ({ ...prev, type: t, category: cats[0], amounts }));
   };
 
@@ -218,8 +231,8 @@ export default function AdminProducts() {
     p.type.toLowerCase().includes(search.toLowerCase())
   );
 
-  const isSaleType     = SALE_TYPES.includes(form.type);
   const isWeightType   = WEIGHT_TYPES.includes(form.type);
+  const isSaleType     = SALE_TYPES.includes(form.type);
   const isPrerollType  = PREROLL_TYPES.includes(form.type);
   const showAmounts    = HAS_AMOUNTS.includes(form.type);
 
@@ -408,7 +421,7 @@ export default function AdminProducts() {
                 {showAmounts && (
                   <div>
                     <label className={lbl}>
-                      {isSaleType    ? "🏷️ Sale Amount / Quantity Pricing — 1/4 · 1/2 · oz · 2oz · 3oz · 1 · 2 · 3 · 4 · 5 · 10"
+                      {isSaleType    ? "🏷️ Sale Amount / Quantity Pricing — all available selections"
                        : isWeightType  ? "💊 Amount Pricing — 1/4 · 1/2 · oz · 2oz · 3oz"
                        : isPrerollType ? "🚬 Quantity — 1 · 2 · 3 · 4 · 5 · 10 units"
                        :                 "🔢 Quantity Pricing — 1 · 2 · 3 · 4 · 5 units"}

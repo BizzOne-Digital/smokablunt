@@ -1,6 +1,6 @@
 "use client";
-import Link from "next/link";
 import { useMemo, useState } from "react";
+import Link from "next/link";
 import { useCart } from "@/lib/CartContext";
 
 interface AmountPrice { label: string; price: number; }
@@ -10,72 +10,105 @@ interface P {
   amounts?: AmountPrice[]; onSale?: boolean; salePrice?: number;
 }
 
-const SALE_TYPES = ["sale", "promo"];
-const WEIGHT_TYPES = ["flowers"];
+const WEIGHT_TYPES  = ["flowers"];
 const PREROLL_TYPES = ["pre-rolls"];
-const QTY_TYPES = ["concentrates", "edibles", "accessories"];
+const QTY_TYPES     = ["concentrates", "edibles", "accessories"];
+const SALE_TYPES    = ["sale", "promo"];
 
-const SALE_LABELS = ["1/4", "1/2", "oz", "2oz", "3oz", "1", "2", "3", "4", "5", "10"];
 const WEIGHT_LABELS = ["1/4", "1/2", "oz", "2oz", "3oz"];
 const PREROLL_LABELS = ["1", "2", "3", "4", "5", "10"];
 const QTY_LABELS = ["1", "2", "3", "4", "5"];
+const SALE_LABELS = ["1/4", "1/2", "oz", "2oz", "3oz", "1", "2", "3", "4", "5", "10"];
 
-const labelsForType = (type: string) => {
-  const t = type?.toLowerCase();
-  if (SALE_TYPES.includes(t)) return SALE_LABELS;
-  if (WEIGHT_TYPES.includes(t)) return WEIGHT_LABELS;
-  if (PREROLL_TYPES.includes(t)) return PREROLL_LABELS;
-  if (QTY_TYPES.includes(t)) return QTY_LABELS;
-  return [];
+const normalizeLabel = (label: string) => {
+  const cleaned = label.toLowerCase().replace(/\s+/g, "").trim();
+  if (cleaned === "ounce" || cleaned === "1oz") return "oz";
+  if (cleaned === "2ounce") return "2oz";
+  if (cleaned === "3ounce") return "3oz";
+  return cleaned;
 };
 
-const normalizeLabel = (label: string) => label.toLowerCase().replace(/\s+/g, "").replace("ounce", "oz");
+const prettyLabel = (label: string) => {
+  const n = normalizeLabel(label);
+  if (n === "oz") return "oz";
+  if (n === "2oz") return "2oz";
+  if (n === "3oz") return "3oz";
+  return label.trim();
+};
 
-const parseDescriptionAmounts = (description: string): AmountPrice[] => {
-  // Supports old sale products where prices were typed in description, e.g.
-  // 1/2 45
-  // Oz 80
-  // 2 oz 150
+const parseSaleAmountsFromDescription = (description: string): AmountPrice[] => {
+  if (!description) return [];
+  const text = description.replace(/,/g, "\n");
   const out: AmountPrice[] = [];
-  description.split(/\n+/).forEach(line => {
-    const m = line.trim().match(/^(1\/4|1\/2|\d+\s*oz|oz|\d+)\s*[-:]?\s*\$?(\d+(?:\.\d+)?)$/i);
-    if (!m) return;
-    const raw = m[1].toLowerCase().replace(/\s+/g, "");
-    const label = raw === "oz" ? "oz" : raw;
-    out.push({ label, price: Number(m[2]) });
-  });
+  const add = (label: string, price: string) => {
+    const value = Number(price);
+    if (!Number.isFinite(value) || value <= 0) return;
+    const normalized = normalizeLabel(label);
+    const allowed = SALE_LABELS.map(normalizeLabel);
+    const index = allowed.indexOf(normalized);
+    if (index === -1) return;
+    const canonical = SALE_LABELS[index];
+    if (!out.some(a => normalizeLabel(a.label) === normalized)) {
+      out.push({ label: canonical, price: value });
+    }
+  };
+
+  const patterns = [
+    /(^|\s)(1\/4|1\/2|oz|ounce|1\s*oz|2\s*oz|3\s*oz)\s*[-:]?\s*\$?(\d+(?:\.\d+)?)/gi,
+    /(^|\s)(1|2|3|4|5|10)\s*[-:]?\s*\$?(\d+(?:\.\d+)?)(?=\s|$)/gi,
+  ];
+
+  for (const pattern of patterns) {
+    let m: RegExpExecArray | null;
+    while ((m = pattern.exec(text)) !== null) add(m[2], m[3]);
+  }
   return out;
-};
-
-const availableAmountsFor = (p: P): AmountPrice[] => {
-  const labels = labelsForType(p.type);
-  const saved = p.amounts?.filter(a => Number(a.price) > 0) || [];
-  const parsed = SALE_TYPES.includes(p.type?.toLowerCase()) ? parseDescriptionAmounts(p.description || "") : [];
-  const source = saved.length ? saved : parsed;
-
-  if (!labels.length) return [];
-
-  return labels
-    .map(label => {
-      const found = source.find(a => normalizeLabel(a.label) === normalizeLabel(label));
-      return found ? { label, price: Number(found.price) } : null;
-    })
-    .filter((a): a is AmountPrice => !!a && a.price > 0);
 };
 
 export default function ProductCard({ p }: { p: P }) {
   const { addItem } = useCart();
-  const amounts = useMemo(() => availableAmountsFor(p), [p]);
   const [added, setAdded] = useState(false);
   const [showPicker, setShowPicker] = useState(false);
-  const [selected, setSelected] = useState<AmountPrice | null>(amounts[0] || null);
+
+  const type = p.type?.toLowerCase() || "";
+  const isSaleType = SALE_TYPES.includes(type);
+  const labelTemplate = isSaleType
+    ? SALE_LABELS
+    : WEIGHT_TYPES.includes(type)
+      ? WEIGHT_LABELS
+      : PREROLL_TYPES.includes(type)
+        ? PREROLL_LABELS
+        : QTY_TYPES.includes(type)
+          ? QTY_LABELS
+          : [];
+
+  const amounts = useMemo(() => {
+    const saved = (p.amounts || [])
+      .filter(a => a && Number(a.price) > 0 && String(a.label || "").trim())
+      .map(a => ({ label: prettyLabel(a.label), price: Number(a.price) }));
+
+    const parsed = isSaleType ? parseSaleAmountsFromDescription(p.description) : [];
+    const combined = [...saved];
+    parsed.forEach(a => {
+      if (!combined.some(x => normalizeLabel(x.label) === normalizeLabel(a.label))) combined.push(a);
+    });
+
+    if (!labelTemplate.length) return combined;
+
+    return labelTemplate
+      .map(label => combined.find(a => normalizeLabel(a.label) === normalizeLabel(label)))
+      .filter(Boolean) as AmountPrice[];
+  }, [p.amounts, p.description, isSaleType, labelTemplate.join("|")]);
 
   const hasPicker = amounts.length > 0;
-  const prices = hasPicker ? amounts.map(a => a.price) : [p.salePrice && p.salePrice > 0 ? p.salePrice : p.price].filter(Boolean);
-  const minPrice = prices.length ? Math.min(...prices) : 0;
-  const maxPrice = prices.length ? Math.max(...prices) : 0;
-  const priceRange = hasPicker && minPrice !== maxPrice;
-  const detailHref = `/products/${p.id}`;
+  const [selectedLabel, setSelectedLabel] = useState<string | null>(null);
+  const selected = amounts.find(a => a.label === selectedLabel) || amounts[0] || null;
+
+  const prices = amounts.map(a => a.price).filter(x => x > 0);
+  const minPrice = prices.length ? Math.min(...prices) : p.price;
+  const maxPrice = prices.length ? Math.max(...prices) : p.price;
+  const priceRange = prices.length > 1 && minPrice !== maxPrice;
+  const displayPrice = selected?.price || p.price;
 
   const catStyle = ({
     Indica: "bg-purple-500/10 text-purple-400",
@@ -84,24 +117,14 @@ export default function ProductCard({ p }: { p: P }) {
   } as Record<string,string>)[p.category] || "bg-green/10 text-green";
 
   const handleAdd = () => {
-    if (hasPicker && !selected) {
-      setSelected(amounts[0]);
-      setShowPicker(true);
-      return;
-    }
-    if (hasPicker && !showPicker) {
-      setShowPicker(true);
-      return;
-    }
-
-    const finalPrice = selected?.price || (p.salePrice && p.salePrice > 0 ? p.salePrice : p.price);
+    if (hasPicker && !showPicker) { setShowPicker(true); return; }
     addItem({
       id: p.id,
       name: p.name,
-      price: finalPrice,
+      price: displayPrice,
       category: p.category,
       image: p.image,
-      amount: selected?.label || "1",
+      amount: selected ? selected.label : "1",
     });
     setAdded(true);
     setShowPicker(false);
@@ -110,7 +133,7 @@ export default function ProductCard({ p }: { p: P }) {
 
   return (
     <article className="group bg-card border border-border rounded-2xl overflow-visible hover:border-borderHi hover:shadow-xl hover:shadow-black/30 transition-all duration-300 flex flex-col relative">
-      <Link href={detailHref} className="relative aspect-square md:h-56 md:aspect-auto overflow-hidden bg-bg flex-shrink-0 block rounded-t-2xl">
+      <Link href={`/products/${p.id}`} className="relative aspect-square md:h-56 md:aspect-auto overflow-hidden bg-bg flex-shrink-0 block">
         <img
           src={p.image || "https://images.unsplash.com/photo-1603909223429-69bb7101f420?w=600&q=80"}
           alt={p.name}
@@ -122,8 +145,7 @@ export default function ProductCard({ p }: { p: P }) {
           <span className={`px-2 py-0.5 rounded-full font-sans text-[9px] font-bold uppercase tracking-wider backdrop-blur-sm ${catStyle}`}>
             {p.category}
           </span>
-          {p.type?.toLowerCase() === "sale" && <span className="bg-red-500 text-white px-2 py-0.5 rounded-full font-sans text-[9px] font-bold">SALE</span>}
-          {p.type?.toLowerCase() === "promo" && <span className="bg-green text-bg px-2 py-0.5 rounded-full font-sans text-[9px] font-bold">PROMO</span>}
+          {(p.onSale || isSaleType) && <span className="bg-red-500 text-white px-2 py-0.5 rounded-full font-sans text-[9px] font-bold">SALE</span>}
         </div>
         {p.thc > 0 && (
           <div className="absolute top-2 right-2 bg-black/60 backdrop-blur-sm px-1.5 py-0.5 rounded-full">
@@ -134,7 +156,7 @@ export default function ProductCard({ p }: { p: P }) {
 
       <div className="p-3 md:p-5 flex flex-col flex-1 gap-2 md:gap-3 relative overflow-visible">
         <div>
-          <Link href={detailHref} className="font-title text-sm md:text-base font-semibold text-textPri leading-snug line-clamp-2 hover:text-green transition-colors">
+          <Link href={`/products/${p.id}`} className="font-title text-sm md:text-base font-semibold text-textPri leading-snug line-clamp-2 hover:text-green transition-colors">
             {p.name}
           </Link>
           <p className="font-sans text-[10px] text-textDim uppercase tracking-wider mt-0.5">{p.type}</p>
@@ -146,13 +168,12 @@ export default function ProductCard({ p }: { p: P }) {
 
         {showPicker && hasPicker && (
           <div className="absolute bottom-full left-0 right-0 z-50 mb-1 bg-card border border-green/30 rounded-2xl p-3 shadow-2xl shadow-black/60 space-y-2">
-            <p className="font-sans text-[10px] font-semibold text-textDim uppercase tracking-widest">Select Amount</p>
+            <p className="font-sans text-[10px] font-semibold text-textDim uppercase tracking-widest">Amount / Quantity</p>
             <div className="grid grid-cols-3 gap-1">
               {amounts.map(a => (
                 <button
                   key={a.label}
-                  type="button"
-                  onClick={() => setSelected(a)}
+                  onClick={() => setSelectedLabel(a.label)}
                   className={`py-1.5 px-1 rounded-lg font-sans text-[10px] font-semibold border transition-all text-center ${selected?.label === a.label ? "bg-green text-bg border-green" : "border-border text-textSec hover:border-green hover:text-green"}`}
                 >
                   <span className="block font-bold">{a.label}</span>
@@ -160,40 +181,29 @@ export default function ProductCard({ p }: { p: P }) {
                 </button>
               ))}
             </div>
-            <Link href={detailHref} className="block text-center font-sans text-[10px] text-green hover:underline pt-1">
-              View full details
-            </Link>
           </div>
         )}
 
         <div className="flex items-center justify-between pt-1 border-t border-border mt-auto">
           <div>
             <p className="font-sans text-[9px] text-textDim uppercase">
-              {priceRange ? "From" : showPicker ? "Total" : ""}
+              {showPicker ? "Total" : priceRange ? "From" : "Total"}
             </p>
             <p className="font-title text-base font-bold text-textPri">
-              {hasPicker
-                ? (showPicker && selected ? selected.price : priceRange ? `${minPrice} – ${maxPrice}` : minPrice)
-                : (p.salePrice && p.salePrice > 0 ? p.salePrice : p.price)}
+              {showPicker ? displayPrice : priceRange ? `${minPrice} – ${maxPrice}` : displayPrice}
             </p>
           </div>
           <div className="flex gap-1.5">
             {showPicker && (
-              <button
-                type="button"
-                onClick={() => setShowPicker(false)}
-                className="flex items-center gap-1 px-2.5 py-2 rounded-xl font-sans text-[10px] font-semibold border border-border text-textSec hover:border-borderHi transition-all"
-              >
+              <button onClick={() => setShowPicker(false)}
+                className="flex items-center gap-1 px-2.5 py-2 rounded-xl font-sans text-[10px] font-semibold border border-border text-textSec hover:border-borderHi transition-all">
                 <span className="ms" style={{fontSize:"12px"}}>close</span>
               </button>
             )}
-            <button
-              type="button"
-              onClick={handleAdd}
-              className={`flex items-center gap-1.5 px-3 py-2 rounded-xl font-sans text-[10px] font-bold uppercase tracking-wider transition-all duration-200 ${added ? "bg-greenBg border border-green text-green" : "bg-green text-bg hover:bg-greenLo active:scale-95 shadow-lg shadow-green/20"}`}
-            >
+            <button onClick={handleAdd}
+              className={`flex items-center gap-1.5 px-3 py-2 rounded-xl font-sans text-[10px] font-bold uppercase tracking-wider transition-all duration-200 ${added ? "bg-greenBg border border-green text-green" : "bg-green text-bg hover:bg-greenLo active:scale-95 shadow-lg shadow-green/20"}`}>
               <span className="ms" style={{fontSize:"14px"}}>{added ? "check" : hasPicker && !showPicker ? "tune" : "add_shopping_cart"}</span>
-              {added ? "Added" : hasPicker && !showPicker ? "Select" : "Add"}
+              {added ? "Added!" : hasPicker && !showPicker ? "Select" : "Add"}
             </button>
           </div>
         </div>
