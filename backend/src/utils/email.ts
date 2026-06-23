@@ -69,7 +69,7 @@ export async function sendOrderConfirmation(o: {
   const body = `
   <p style="color:#a3b3a8;margin-bottom:20px;">Hi ${o.customerName}, your order is confirmed! 🌿</p>
   <table style="width:100%;border-collapse:collapse;">
-    ${row("Order #", o.orderNumber)}${row("Deliver to", o.address)}${row("Payment", o.payment)}
+    ${row("Order #", o.orderNumber)}${row("Deliver to", o.address)}${row("Payment", "N/A")}
   </table>
   <table style="width:100%;border-collapse:collapse;margin-top:16px;">${lines}</table>
   <div style="background:#1a1a1a;border-radius:8px;padding:14px;margin-top:12px;display:flex;justify-content:space-between;">
@@ -110,7 +110,7 @@ export async function sendAdminOrderAlert(o: {
     ${row("Phone",    `<a href="tel:${o.customerPhone}" style="color:#10b981;">${o.customerPhone}</a>`)}
     ${row("Email",    o.customerEmail)}
     ${row("Address",  o.address)}
-    ${row("Payment",  o.payment)}
+    ${row("Payment",  "N/A")}
     ${o.notes ? row("Notes", o.notes) : ""}
   </table>
   <table style="width:100%;border-collapse:collapse;margin-top:16px;">${lines}</table>
