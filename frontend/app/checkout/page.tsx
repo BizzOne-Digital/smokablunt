@@ -202,6 +202,10 @@ export default function CheckoutPage() {
                     <span className="text-textSec">Deliver to</span>
                     <span className="text-textPri text-right ml-4 truncate max-w-[200px]">{form.address}, {form.city}</span>
                   </div>
+                  <div className="flex justify-between">
+                    <span className="text-textSec">Payment</span>
+                    <span className="text-textPri">N/A</span>
+                  </div>
                 </div>
 
                 <div className="flex gap-3">
