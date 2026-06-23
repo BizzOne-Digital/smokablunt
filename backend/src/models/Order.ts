@@ -9,7 +9,7 @@ export interface IOrder extends Document {
   subtotal:      number;
   deliveryFee:   number;
   total:         number;
-  paymentMethod: "cash" | "etransfer";
+  paymentMethod: "cash" | "etransfer" | "n/a";
   status: "pending" | "confirmed" | "preparing" | "out_for_delivery" | "delivered" | "cancelled";
   statusNote?: string;
   statusHistory: { status: string; note?: string; at: Date }[];
@@ -45,7 +45,7 @@ const S = new Schema<IOrder>(
     subtotal:      { type: Number, required: true },
     deliveryFee:   { type: Number, default: 5 },
     total:         { type: Number, required: true },
-    paymentMethod: { type: String, enum: ["cash", "etransfer"], default: "cash" },
+    paymentMethod: { type: String, enum: ["cash", "etransfer", "n/a"], default: "n/a" },
     status: {
       type: String,
       enum: ["pending", "confirmed", "preparing", "out_for_delivery", "delivered", "cancelled"],
