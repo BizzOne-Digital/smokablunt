@@ -46,7 +46,7 @@ export default function CheckoutPage() {
           product: i.id, name: i.name, image: i.image,
           price: i.price, quantity: i.quantity, amount: i.amount,
         })),
-        paymentMethod: "cash",
+        paymentMethod: "n/a",
         customerId: user?.id || null,
       });
       const d = await r.json();
@@ -103,7 +103,6 @@ export default function CheckoutPage() {
       <main className="pt-20 pb-16 max-w-site mx-auto px-4 md:px-8">
         <div className="py-8">
           <h1 className="font-title text-3xl font-bold text-textPri">Checkout</h1>
-          <p className="font-sans text-sm text-textSec mt-1">19+ valid ID required at delivery</p>
         </div>
 
         {/* Steps */}
@@ -171,12 +170,6 @@ export default function CheckoutPage() {
                   <textarea rows={2} value={form.notes} onChange={e => set("notes", e.target.value)} className={`${inp} resize-none`} placeholder="Buzzer code, gate code..." />
                 </div>
 
-                {/* ── Enjoy message ── */}
-                <div className="p-4 bg-greenBg border border-green/20 rounded-2xl text-center">
-                  <p className="font-title text-base font-semibold text-green">Enjoy & Have a Nice Day 🌿</p>
-                  <p className="font-sans text-xs text-textSec mt-1">Same day delivery · 19+ ID required</p>
-                </div>
-
                 <button
                   disabled={!canNext}
                   onClick={() => setStep(2)}
@@ -209,10 +202,6 @@ export default function CheckoutPage() {
                     <span className="text-textSec">Deliver to</span>
                     <span className="text-textPri text-right ml-4 truncate max-w-[200px]">{form.address}, {form.city}</span>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-textSec">Payment</span>
-                    <span className="text-textPri">Cash · Enjoy & Have a Nice Day 🌿</span>
-                  </div>
                 </div>
 
                 <div className="flex gap-3">
@@ -228,8 +217,8 @@ export default function CheckoutPage() {
                 <h2 className="font-title text-xl font-semibold text-textPri">Place Your Order</h2>
                 <div className="p-5 bg-greenBg border border-green/20 rounded-2xl">
                   <p className="font-sans text-sm text-textSec leading-relaxed">
-                    By placing this order you confirm you are <strong className="text-green">19+ years old</strong> and will have valid ID ready at delivery.
-                    Total due: <strong className="text-textPri">{total.toFixed(2)}</strong>.
+                    By placing this order you confirm you are <strong className="text-green">19+ years old</strong>.
+                    Total: <strong className="text-textPri">{total.toFixed(2)}</strong>.
                   </p>
                 </div>
                 {err && (
